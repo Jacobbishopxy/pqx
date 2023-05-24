@@ -181,6 +181,14 @@ impl CmdExecutor {
         }
     }
 
+    pub fn has_stdout_fn(&self) -> bool {
+        self.stdout_fn.is_some()
+    }
+
+    pub fn has_stderr_fn(&self) -> bool {
+        self.stderr_fn.is_some()
+    }
+
     pub fn register_stdout_fn<F>(&mut self, f: F) -> &mut Self
     where
         F: Fn(String) + 'static,
