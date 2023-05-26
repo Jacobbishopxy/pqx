@@ -133,10 +133,12 @@ pub enum CmdArg<'a> {
 // CmdExecutor
 // ================================================================================================
 
+pub type SyncFn = &'static dyn Fn(String) -> PqxResult<()>;
+
 pub fn gen_execution<'a>(
     channel_buffer: usize,
     pipe: ChildStdPipe,
-    f: impl Fn(String),
+    f: SyncFn,
 ) -> (
     impl Future<Output = Result<(), &'a str>>,
     impl Future<Output = Result<(), &'a str>>,
@@ -152,7 +154,7 @@ pub fn gen_execution<'a>(
 
     let so_rx = async move {
         while let Some(msg) = stdout_rx.recv().await {
-            f(msg);
+            f(msg).map_err(|_| "so_rx fail")?;
         }
         Ok(())
     };
@@ -162,8 +164,8 @@ pub fn gen_execution<'a>(
 
 async fn exec_cmd(
     channel_buffer: usize,
-    fo: Option<(ChildStdout, impl Fn(String))>,
-    fe: Option<(ChildStderr, impl Fn(String))>,
+    fo: Option<(ChildStdout, SyncFn)>,
+    fe: Option<(ChildStderr, SyncFn)>,
 ) -> PqxResult<()> {
     let chn_o = fo.map(|(o, f)| gen_execution(channel_buffer, o.into(), f));
     let chn_e = fe.map(|(e, f)| gen_execution(channel_buffer, e.into(), f));
@@ -186,8 +188,8 @@ async fn exec_cmd(
 }
 
 pub struct CmdExecutor {
-    stdout_fn: Option<Box<dyn Fn(String)>>,
-    stderr_fn: Option<Box<dyn Fn(String)>>,
+    stdout_fn: Option<SyncFn>,
+    stderr_fn: Option<SyncFn>,
 }
 
 impl CmdExecutor {
@@ -206,20 +208,14 @@ impl CmdExecutor {
         self.stderr_fn.is_some()
     }
 
-    pub fn register_stdout_fn<F>(&mut self, f: F) -> &mut Self
-    where
-        F: Fn(String) + 'static,
-    {
-        self.stdout_fn = Some(Box::new(f));
+    pub fn register_stdout_fn(&mut self, f: SyncFn) -> &mut Self {
+        self.stdout_fn = Some(f);
 
         self
     }
 
-    pub fn register_stderr_fn<F>(&mut self, f: F) -> &mut Self
-    where
-        F: Fn(String) + 'static,
-    {
-        self.stderr_fn = Some(Box::new(f));
+    pub fn register_stderr_fn(&mut self, f: SyncFn) -> &mut Self {
+        self.stderr_fn = Some(f);
 
         self
     }
@@ -233,8 +229,8 @@ impl CmdExecutor {
 
         exec_cmd(
             channel_buffer,
-            self.stdout_fn.as_ref().map(|f| (child_stdout, f)),
-            self.stderr_fn.as_ref().map(|f| (child_stderr, f)),
+            self.stdout_fn.as_ref().map(|f| (child_stdout, *f)),
+            self.stderr_fn.as_ref().map(|f| (child_stderr, *f)),
         )
         .await?;
 
@@ -246,17 +242,28 @@ impl CmdExecutor {
 // CmdAsyncExecutor
 // ================================================================================================
 
-pub fn gen_async_execution<'a, Fut>(
+pub trait AsyncFn {
+    fn call(&self, input: String) -> BoxFuture<'static, PqxResult<()>>;
+}
+
+impl<T, F> AsyncFn for T
+where
+    T: Fn(String) -> F,
+    F: Future<Output = PqxResult<()>> + Send + 'static,
+{
+    fn call(&self, input: String) -> BoxFuture<'static, PqxResult<()>> {
+        Box::pin(self(input))
+    }
+}
+
+pub fn gen_async_execution<'a>(
     channel_buffer: usize,
     pipe: ChildStdPipe,
-    f: impl Fn(String) -> Fut,
+    f: &'static dyn AsyncFn,
 ) -> (
-    impl Future<Output = Result<(), &'a str>>,
-    impl Future<Output = Result<(), &'a str>>,
-)
-where
-    Fut: Future<Output = PqxResult<()>>,
-{
+    impl Future<Output = Result<(), &'_ str>>,
+    impl Future<Output = Result<(), &'_ str>>,
+) {
     let (std_tx, mut std_rx) = tokio::sync::mpsc::channel(channel_buffer);
 
     let so_tx = async move {
@@ -271,7 +278,7 @@ where
         // if consuming speed (`f(msg).await`) is less than recving speed (`std_rx`), then the `msg` buffer will discard
         // new `msg` until channel has space again. check `tokio::sync::mpsc::channel`
         while let Some(msg) = std_rx.recv().await {
-            f(msg).await.map_err(|_| "so_rx fail")?;
+            f.call(msg).await.map_err(|_| "so_rx fail")?;
         }
 
         Ok(())
@@ -280,15 +287,11 @@ where
     (so_tx, so_rx)
 }
 
-async fn exec_async_cmd<FutO, FutE>(
+async fn exec_async_cmd<'a>(
     channel_buffer: usize,
-    fo: Option<(ChildStdout, impl Fn(String) -> FutO)>,
-    fe: Option<(ChildStderr, impl Fn(String) -> FutE)>,
-) -> PqxResult<()>
-where
-    FutO: Future<Output = PqxResult<()>>,
-    FutE: Future<Output = PqxResult<()>>,
-{
+    fo: Option<(ChildStdout, &'static dyn AsyncFn)>,
+    fe: Option<(ChildStderr, &'static dyn AsyncFn)>,
+) -> PqxResult<()> {
     let chn_o = fo.map(|(o, f)| gen_async_execution(channel_buffer, o.into(), f));
     let chn_e = fe.map(|(e, f)| gen_async_execution(channel_buffer, e.into(), f));
 
@@ -310,8 +313,8 @@ where
 }
 
 pub struct CmdAsyncExecutor {
-    stdout_fn: Option<BoxFuture<'static, ()>>,
-    stderr_fn: Option<BoxFuture<'static, ()>>,
+    stdout_fn: Option<&'static dyn AsyncFn>,
+    stderr_fn: Option<&'static dyn AsyncFn>,
 }
 
 impl CmdAsyncExecutor {
@@ -330,20 +333,14 @@ impl CmdAsyncExecutor {
         self.stderr_fn.is_some()
     }
 
-    pub fn register_stdout_fn<Fut>(&mut self, f: impl Fn(String) -> Fut) -> &mut Self
-    where
-        Fut: Future<Output = PqxResult<()>>,
-    {
-        // TODO: save f
+    pub fn register_stdout_fn(&mut self, f: &'static dyn AsyncFn) -> &mut Self {
+        self.stdout_fn = Some(f);
 
         self
     }
 
-    pub fn register_stderr_fn<F>(&mut self, f: F) -> &mut Self
-    where
-        F: Fn(String) + 'static,
-    {
-        // TODO: save f
+    pub fn register_stderr_fn(&mut self, f: &'static dyn AsyncFn) -> &mut Self {
+        self.stderr_fn = Some(f);
 
         self
     }
@@ -355,12 +352,12 @@ impl CmdAsyncExecutor {
             CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, user)?,
         };
 
-        // exec_async_cmd(
-        //     channel_buffer,
-        //     self.stdout_fn.as_ref().map(|f| (child_stdout, f)),
-        //     self.stderr_fn.as_ref().map(|f| (child_stderr, f)),
-        // )
-        // .await?;
+        exec_async_cmd(
+            channel_buffer,
+            self.stdout_fn.as_ref().map(|f| (child_stdout, *f)),
+            self.stderr_fn.as_ref().map(|f| (child_stderr, *f)),
+        )
+        .await?;
 
         Ok(child.wait()?)
     }

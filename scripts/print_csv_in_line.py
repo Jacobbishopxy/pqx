@@ -5,6 +5,7 @@
 
 import time
 import datetime as dt
+import random
 
 with open("./sample.csv") as f:
     count = 0
@@ -18,4 +19,4 @@ with open("./sample.csv") as f:
         print(f"{dt.datetime.now()} Line{count}: {line.strip()}")
         count += 1
 
-        time.sleep(1)
+        time.sleep(random.randint(1, 5))
