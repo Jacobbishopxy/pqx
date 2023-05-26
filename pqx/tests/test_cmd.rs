@@ -3,9 +3,9 @@
 //! date: 2023/05/22 23:15:04 Monday
 //! brief:
 
-use pqx::cmd::*;
+use pqx::ec::cmd::*;
+use pqx::ec::util::cmd_which;
 use pqx::error::PqxResult;
-use pqx::util::cmd_which;
 
 fn print_stdout(s: String) -> PqxResult<()> {
     println!("print_stdout: {:?}", s);

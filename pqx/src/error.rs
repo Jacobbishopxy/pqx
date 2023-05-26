@@ -12,6 +12,9 @@ pub enum PqxError {
     #[error(transparent)]
     StdIO(std::io::Error),
 
+    #[error(transparent)]
+    RbMQ(amqprs::error::Error),
+
     #[error("{0}")]
     Custom(&'static str),
 }
@@ -31,5 +34,11 @@ impl From<std::io::Error> for PqxError {
 impl From<&'static str> for PqxError {
     fn from(e: &'static str) -> Self {
         PqxError::Custom(e)
+    }
+}
+
+impl From<amqprs::error::Error> for PqxError {
+    fn from(e: amqprs::error::Error) -> Self {
+        PqxError::RbMQ(e)
     }
 }
