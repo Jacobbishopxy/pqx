@@ -3,7 +3,7 @@
 //! date: 2023/05/22 23:15:04 Monday
 //! brief:
 
-use pqx::cmd::{gen_async_execution, gen_bash_cmd, gen_ping_cmd, CmdArg, CmdExecutor};
+use pqx::cmd::{gen_bash_cmd, gen_execution, gen_ping_cmd, CmdArg, CmdExecutor};
 use pqx::util::cmd_which;
 
 fn print_stdout(s: String) {
@@ -18,7 +18,7 @@ fn print_stderr(s: String) {
 async fn cmd_compose_and_exec_success1() {
     let (_, co, _) = gen_ping_cmd("github.com").unwrap();
 
-    let (so_tx, so_rx) = gen_async_execution(1, co.into(), print_stdout);
+    let (so_tx, so_rx) = gen_execution(1, co.into(), print_stdout);
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -52,7 +52,7 @@ async fn cmd_compose_and_exec_success2() {
     ))
     .unwrap();
 
-    let (so_tx, so_rx) = gen_async_execution(1, co.into(), print_stdout);
+    let (so_tx, so_rx) = gen_execution(1, co.into(), print_stdout);
 
     let task = tokio::try_join!(so_tx, so_rx);
 

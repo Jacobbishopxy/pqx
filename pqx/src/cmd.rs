@@ -3,13 +3,17 @@
 //! date: 2023/05/22 20:49:10 Monday
 //! brief:
 
-use std::future::Future;
+use futures::future::{BoxFuture, Future};
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio};
 
 use tokio::sync::mpsc::Sender;
 
 use crate::error::{PqxError, PqxResult};
+
+// ================================================================================================
+// ChildStdPipe
+// ================================================================================================
 
 pub enum ChildStdPipe {
     Out(ChildStdout),
@@ -40,6 +44,19 @@ async fn send_child_std<R: Read>(r: R, tx: Sender<String>) -> PqxResult<()> {
 
     Ok(())
 }
+
+impl ChildStdPipe {
+    async fn send_child_std(self, tx: Sender<String>) -> PqxResult<()> {
+        match self {
+            ChildStdPipe::Out(o) => send_child_std(o, tx).await,
+            ChildStdPipe::Err(e) => send_child_std(e, tx).await,
+        }
+    }
+}
+
+// ================================================================================================
+// commands generators
+// ================================================================================================
 
 pub fn gen_ping_cmd(addr: &str) -> PqxResult<(Child, ChildStdout, ChildStderr)> {
     let mut child = Command::new("ping")
@@ -112,10 +129,14 @@ pub enum CmdArg<'a> {
     },
 }
 
-pub fn gen_async_execution<'a, F: Fn(String)>(
+// ================================================================================================
+// CmdExecutor
+// ================================================================================================
+
+pub fn gen_execution<'a>(
     channel_buffer: usize,
     pipe: ChildStdPipe,
-    f: F,
+    f: impl Fn(String),
 ) -> (
     impl Future<Output = Result<(), &'a str>>,
     impl Future<Output = Result<(), &'a str>>,
@@ -139,17 +160,13 @@ pub fn gen_async_execution<'a, F: Fn(String)>(
     (so_tx, so_rx)
 }
 
-async fn exec_async_cmd<FO, FE>(
+async fn exec_cmd(
     channel_buffer: usize,
-    fo: Option<(ChildStdout, FO)>,
-    fe: Option<(ChildStderr, FE)>,
-) -> PqxResult<()>
-where
-    FO: Fn(String),
-    FE: Fn(String),
-{
-    let chn_o = fo.map(|(o, f)| gen_async_execution(channel_buffer, o.into(), f));
-    let chn_e = fe.map(|(e, f)| gen_async_execution(channel_buffer, e.into(), f));
+    fo: Option<(ChildStdout, impl Fn(String))>,
+    fe: Option<(ChildStderr, impl Fn(String))>,
+) -> PqxResult<()> {
+    let chn_o = fo.map(|(o, f)| gen_execution(channel_buffer, o.into(), f));
+    let chn_e = fe.map(|(e, f)| gen_execution(channel_buffer, e.into(), f));
 
     match (chn_o, chn_e) {
         (None, None) => {}
@@ -214,12 +231,136 @@ impl CmdExecutor {
             CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, user)?,
         };
 
-        exec_async_cmd(
+        exec_cmd(
             channel_buffer,
             self.stdout_fn.as_ref().map(|f| (child_stdout, f)),
             self.stderr_fn.as_ref().map(|f| (child_stderr, f)),
         )
         .await?;
+
+        Ok(child.wait()?)
+    }
+}
+
+// ================================================================================================
+// CmdAsyncExecutor
+// ================================================================================================
+
+pub fn gen_async_execution<'a, Fut>(
+    channel_buffer: usize,
+    pipe: ChildStdPipe,
+    f: impl Fn(String) -> Fut,
+) -> (
+    impl Future<Output = Result<(), &'a str>>,
+    impl Future<Output = Result<(), &'a str>>,
+)
+where
+    Fut: Future<Output = PqxResult<()>>,
+{
+    let (std_tx, mut std_rx) = tokio::sync::mpsc::channel(channel_buffer);
+
+    let so_tx = async move {
+        pipe.send_child_std(std_tx)
+            .await
+            .map_err(|_| "so_tx fail")?;
+
+        Ok(())
+    };
+
+    let so_rx = async move {
+        // if consuming speed (`f(msg).await`) is less than recving speed (`std_rx`), then the `msg` buffer will discard
+        // new `msg` until channel has space again. check `tokio::sync::mpsc::channel`
+        while let Some(msg) = std_rx.recv().await {
+            f(msg).await.map_err(|_| "so_rx fail")?;
+        }
+
+        Ok(())
+    };
+
+    (so_tx, so_rx)
+}
+
+async fn exec_async_cmd<FutO, FutE>(
+    channel_buffer: usize,
+    fo: Option<(ChildStdout, impl Fn(String) -> FutO)>,
+    fe: Option<(ChildStderr, impl Fn(String) -> FutE)>,
+) -> PqxResult<()>
+where
+    FutO: Future<Output = PqxResult<()>>,
+    FutE: Future<Output = PqxResult<()>>,
+{
+    let chn_o = fo.map(|(o, f)| gen_async_execution(channel_buffer, o.into(), f));
+    let chn_e = fe.map(|(e, f)| gen_async_execution(channel_buffer, e.into(), f));
+
+    match (chn_o, chn_e) {
+        (None, None) => {}
+        (None, Some((se_tx, se_rx))) => {
+            tokio::try_join!(se_tx, se_rx)?;
+        }
+        (Some((so_tx, so_rx)), None) => {
+            tokio::try_join!(so_tx, so_rx)?;
+        }
+        (Some((so_tx, so_rx)), Some((se_tx, se_rx))) => {
+            tokio::try_join!(so_tx, so_rx)?;
+            tokio::try_join!(se_tx, se_rx)?;
+        }
+    };
+
+    Ok(())
+}
+
+pub struct CmdAsyncExecutor {
+    stdout_fn: Option<BoxFuture<'static, ()>>,
+    stderr_fn: Option<BoxFuture<'static, ()>>,
+}
+
+impl CmdAsyncExecutor {
+    pub fn new() -> Self {
+        Self {
+            stdout_fn: None,
+            stderr_fn: None,
+        }
+    }
+
+    pub fn has_stdout_fn(&self) -> bool {
+        self.stdout_fn.is_some()
+    }
+
+    pub fn has_stderr_fn(&self) -> bool {
+        self.stderr_fn.is_some()
+    }
+
+    pub fn register_stdout_fn<Fut>(&mut self, f: impl Fn(String) -> Fut) -> &mut Self
+    where
+        Fut: Future<Output = PqxResult<()>>,
+    {
+        // TODO: save f
+
+        self
+    }
+
+    pub fn register_stderr_fn<F>(&mut self, f: F) -> &mut Self
+    where
+        F: Fn(String) + 'static,
+    {
+        // TODO: save f
+
+        self
+    }
+
+    pub async fn exec(&self, channel_buffer: usize, arg: CmdArg<'_>) -> PqxResult<ExitStatus> {
+        let (mut child, child_stdout, child_stderr) = match arg {
+            CmdArg::Ping { addr } => gen_ping_cmd(addr)?,
+            CmdArg::Bash { cmd } => gen_bash_cmd(cmd)?,
+            CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, user)?,
+        };
+
+        // exec_async_cmd(
+        //     channel_buffer,
+        //     self.stdout_fn.as_ref().map(|f| (child_stdout, f)),
+        //     self.stderr_fn.as_ref().map(|f| (child_stderr, f)),
+        // )
+        // .await?;
 
         Ok(child.wait()?)
     }
