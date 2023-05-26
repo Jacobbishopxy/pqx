@@ -4,7 +4,7 @@
 //! brief:
 
 use pqx::ec::cmd::*;
-use pqx::ec::util::cmd_which;
+use pqx::ec::util::*;
 use pqx::error::PqxResult;
 
 fn print_stdout(s: String) -> PqxResult<()> {
@@ -33,9 +33,9 @@ async fn a_print_stderr(s: String) -> PqxResult<()> {
 
 #[tokio::test]
 async fn cmd_compose_and_exec_success1() {
-    let (_, co, _) = gen_ping_cmd("github.com").unwrap();
+    let CmdChild { child_stdout, .. } = gen_ping_cmd("github.com").unwrap();
 
-    let (so_tx, so_rx) = gen_execution(1, co.into(), &print_stdout);
+    let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), &print_stdout);
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -63,13 +63,13 @@ async fn cmd_compose_and_exec_success2() {
     let py = py.strip_suffix("\n").unwrap();
 
     println!("{:?}", py);
-    let (_, co, _) = gen_bash_cmd(&format!(
+    let CmdChild { child_stdout, .. } = gen_bash_cmd(&format!(
         "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
         std::env::current_dir().unwrap()
     ))
     .unwrap();
 
-    let (so_tx, so_rx) = gen_execution(1, co.into(), &print_stdout);
+    let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), &print_stdout);
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -84,9 +84,11 @@ async fn cmd_executor_success2() {
 
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
+    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+
     let cmd = format!(
-        "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
-        std::env::current_dir().unwrap()
+        "cd {} && {py} -u print_csv_in_line.py",
+        dir.to_str().unwrap()
     );
 
     let arg = CmdArg::Bash { cmd: &cmd };
@@ -100,15 +102,15 @@ async fn cmd_executor_success2() {
 async fn cmd_compose_and_exec_success3() {
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
+    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
 
-    println!("{:?}", py);
-    let (_, co, _) = gen_bash_cmd(&format!(
-        "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
-        std::env::current_dir().unwrap()
+    let CmdChild { child_stdout, .. } = gen_bash_cmd(&format!(
+        "cd {}/../scripts && {py} -u print_csv_in_line.py",
+        dir.to_str().unwrap()
     ))
     .unwrap();
 
-    let (so_tx, so_rx) = gen_async_execution(1, co.into(), &a_print_stdout);
+    let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), &a_print_stdout);
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -123,9 +125,11 @@ async fn cmd_executor_success3() {
 
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
+    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+
     let cmd = format!(
         "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
-        std::env::current_dir().unwrap()
+        dir.to_str().unwrap()
     );
 
     let arg = CmdArg::Bash { cmd: &cmd };

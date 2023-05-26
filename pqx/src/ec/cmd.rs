@@ -58,7 +58,23 @@ impl ChildStdPipe {
 // commands generators
 // ================================================================================================
 
-pub fn gen_ping_cmd(addr: &str) -> PqxResult<(Child, ChildStdout, ChildStderr)> {
+pub struct CmdChild {
+    pub child: Child,
+    pub child_stdout: ChildStdout,
+    pub child_stderr: ChildStderr,
+}
+
+impl CmdChild {
+    pub fn new(child: Child, child_std_out: ChildStdout, child_std_err: ChildStderr) -> Self {
+        Self {
+            child,
+            child_stdout: child_std_out,
+            child_stderr: child_std_err,
+        }
+    }
+}
+
+pub fn gen_ping_cmd(addr: &str) -> PqxResult<CmdChild> {
     let mut child = Command::new("ping")
         .arg(addr)
         .stdout(Stdio::piped())
@@ -68,10 +84,10 @@ pub fn gen_ping_cmd(addr: &str) -> PqxResult<(Child, ChildStdout, ChildStderr)> 
     let child_stdout = child.stdout.take().unwrap();
     let child_stderr = child.stderr.take().unwrap();
 
-    Ok((child, child_stdout, child_stderr))
+    Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
-pub fn gen_bash_cmd(cmd: &str) -> PqxResult<(Child, ChildStdout, ChildStderr)> {
+pub fn gen_bash_cmd(cmd: &str) -> PqxResult<CmdChild> {
     let mut child = Command::new("bash")
         .arg("-c")
         .arg(cmd)
@@ -82,14 +98,10 @@ pub fn gen_bash_cmd(cmd: &str) -> PqxResult<(Child, ChildStdout, ChildStderr)> {
     let child_stdout = child.stdout.take().unwrap();
     let child_stderr = child.stderr.take().unwrap();
 
-    Ok((child, child_stdout, child_stderr))
+    Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
-pub fn gen_ssh_cmd(
-    ip: &str,
-    cmd: &str,
-    user: Option<&str>,
-) -> PqxResult<(Child, ChildStdout, ChildStderr)> {
+pub fn gen_ssh_cmd(ip: &str, cmd: &str, user: Option<&str>) -> PqxResult<CmdChild> {
     // ssh -t {ip} -o StrictHostKeyChecking=no '{cmd}'
     // ssh -t {ip} -o StrictHostKeyChecking=no 'sudo -u {user} -H sh -c "cd ~; . ~/.bashrc; {cmd}"'
 
@@ -112,7 +124,26 @@ pub fn gen_ssh_cmd(
     let child_stdout = child.stdout.take().unwrap();
     let child_stderr = child.stderr.take().unwrap();
 
-    Ok((child, child_stdout, child_stderr))
+    Ok(CmdChild::new(child, child_stdout, child_stderr))
+}
+
+pub fn gen_conda_python_cmd(env: &str, dir: &str, script: &str) -> PqxResult<CmdChild> {
+    let mut child = Command::new("conda")
+        .current_dir(dir)
+        .arg("run")
+        .arg("-n")
+        .arg(env)
+        .arg("--live-stream")
+        .arg("python")
+        .arg(script)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    let child_stdout = child.stdout.take().unwrap();
+    let child_stderr = child.stderr.take().unwrap();
+
+    Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
 pub enum CmdArg<'a> {
@@ -127,6 +158,22 @@ pub enum CmdArg<'a> {
         cmd: &'a str,
         user: Option<&'a str>,
     },
+    CondaPython {
+        env: &'a str,
+        dir: &'a str,
+        script: &'a str,
+    },
+}
+
+impl<'a> CmdArg<'a> {
+    pub fn gen_cmd(&self) -> PqxResult<CmdChild> {
+        match self {
+            CmdArg::Ping { addr } => gen_ping_cmd(addr),
+            CmdArg::Bash { cmd } => gen_bash_cmd(cmd),
+            CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, *user),
+            CmdArg::CondaPython { env, dir, script } => gen_conda_python_cmd(env, dir, script),
+        }
+    }
 }
 
 // ================================================================================================
@@ -221,11 +268,11 @@ impl CmdExecutor {
     }
 
     pub async fn exec(&self, channel_buffer: usize, arg: CmdArg<'_>) -> PqxResult<ExitStatus> {
-        let (mut child, child_stdout, child_stderr) = match arg {
-            CmdArg::Ping { addr } => gen_ping_cmd(addr)?,
-            CmdArg::Bash { cmd } => gen_bash_cmd(cmd)?,
-            CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, user)?,
-        };
+        let CmdChild {
+            mut child,
+            child_stdout,
+            child_stderr,
+        } = arg.gen_cmd()?;
 
         exec_cmd(
             channel_buffer,
@@ -346,11 +393,11 @@ impl CmdAsyncExecutor {
     }
 
     pub async fn exec(&self, channel_buffer: usize, arg: CmdArg<'_>) -> PqxResult<ExitStatus> {
-        let (mut child, child_stdout, child_stderr) = match arg {
-            CmdArg::Ping { addr } => gen_ping_cmd(addr)?,
-            CmdArg::Bash { cmd } => gen_bash_cmd(cmd)?,
-            CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, user)?,
-        };
+        let CmdChild {
+            mut child,
+            child_stdout,
+            child_stderr,
+        } = arg.gen_cmd()?;
 
         exec_async_cmd(
             channel_buffer,
