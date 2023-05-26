@@ -86,10 +86,11 @@ mod util_tests {
     fn cmd_conda_python_success() {
         let conda_env = "py310";
         let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+        let script = "print_csv_in_line.py";
 
         println!("dir: {:?}", dir);
 
-        let cmd = cmd_conda_python(conda_env, dir.to_str().unwrap(), "print_csv_in_line.py");
+        let cmd = cmd_conda_python(conda_env, dir.to_str().unwrap(), script);
 
         println!("{:?}", cmd);
     }

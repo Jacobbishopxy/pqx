@@ -135,6 +135,7 @@ pub fn gen_conda_python_cmd(env: &str, dir: &str, script: &str) -> PqxResult<Cmd
         .arg(env)
         .arg("--live-stream")
         .arg("python")
+        .arg("-u")
         .arg(script)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

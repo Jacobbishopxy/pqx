@@ -138,3 +138,40 @@ async fn cmd_executor_success3() {
     assert!(res.is_ok());
     println!("{:?}", res.unwrap());
 }
+
+#[tokio::test]
+async fn cmd_compose_and_exec_success4() {
+    let conda_env = "py310";
+    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let script = "print_csv_in_line.py";
+
+    let CmdChild { child_stdout, .. } =
+        gen_conda_python_cmd(conda_env, dir.to_str().unwrap(), script).unwrap();
+
+    let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), &a_print_stdout);
+
+    let task = tokio::try_join!(so_tx, so_rx);
+
+    assert!(task.is_ok());
+}
+
+#[tokio::test]
+async fn cmd_executor_success4() {
+    let mut executor = CmdAsyncExecutor::new();
+    executor.register_stdout_fn(&a_print_stdout);
+    executor.register_stderr_fn(&a_print_stderr);
+
+    let conda_env = "py310";
+    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let script = "print_csv_in_line.py";
+
+    let arg = CmdArg::CondaPython {
+        env: conda_env,
+        dir: dir.to_str().unwrap(),
+        script,
+    };
+    let res = executor.exec(1, arg).await;
+
+    assert!(res.is_ok());
+    println!("{:?}", res.unwrap());
+}
