@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  rabbitmq-dev:
+    restart: always
+    container_name: rabbitmq-dev
+    image: rabbitmq:3.11-management
+    environment:
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_VHOST: 'vhost'
+    ports:
+      - "0.0.0.0:5672:5672"
+      - "0.0.0.0:15672:15672"
+    volumes:
+      - ./data/:/var/lib/rabbitmq/:z
