@@ -4,8 +4,16 @@
 //! brief:
 
 pub mod client;
+pub mod consumer;
+pub mod message;
 pub mod publish;
 pub mod subscribe;
+
+macro_rules! get_connection {
+    ($s:ident) => {
+        $s.connection.as_ref().ok_or("connection is empty")
+    };
+}
 
 macro_rules! get_channel {
     ($s:ident) => {
@@ -14,3 +22,4 @@ macro_rules! get_channel {
 }
 
 pub(crate) use get_channel;
+pub(crate) use get_connection;

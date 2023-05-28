@@ -4,6 +4,7 @@
 //! brief:
 
 use futures::future::{BoxFuture, Future};
+use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio};
 
@@ -147,6 +148,7 @@ pub fn gen_conda_python_cmd(env: &str, dir: &str, script: &str) -> PqxResult<Cmd
     Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub enum CmdArg<'a> {
     Ping {
         addr: &'a str,

@@ -84,7 +84,7 @@ async fn cmd_executor_success2() {
 
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
-    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
 
     let cmd = format!(
         "cd {} && {py} -u print_csv_in_line.py",
@@ -102,7 +102,7 @@ async fn cmd_executor_success2() {
 async fn cmd_compose_and_exec_success3() {
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
-    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
 
     let CmdChild { child_stdout, .. } = gen_bash_cmd(&format!(
         "cd {}/../scripts && {py} -u print_csv_in_line.py",
@@ -125,7 +125,7 @@ async fn cmd_executor_success3() {
 
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
-    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
 
     let cmd = format!(
         "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
@@ -142,7 +142,7 @@ async fn cmd_executor_success3() {
 #[tokio::test]
 async fn cmd_compose_and_exec_success4() {
     let conda_env = "py310";
-    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let script = "print_csv_in_line.py";
 
     let CmdChild { child_stdout, .. } =
@@ -162,7 +162,7 @@ async fn cmd_executor_success4() {
     executor.register_stderr_fn(&a_print_stderr);
 
     let conda_env = "py310";
-    let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+    let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let script = "print_csv_in_line.py";
 
     let arg = CmdArg::CondaPython {

@@ -3,17 +3,20 @@
 //! date: 2023/05/27 09:18:35 Saturday
 //! brief:
 
+use std::sync::Arc;
+
 use amqprs::callbacks::{ChannelCallback, ConnectionCallback};
 use amqprs::channel::*;
 use amqprs::connection::{Connection, OpenConnectionArguments};
 
-use super::get_channel;
+use super::{get_channel, get_connection};
 use crate::error::PqxResult;
 
 // ================================================================================================
 // Conn
 // ================================================================================================
 
+#[derive(Debug)]
 pub struct ConnArg<'a> {
     pub host: &'a str,
     pub port: u16,
@@ -26,6 +29,7 @@ pub struct ConnArg<'a> {
 // QueueInfo
 // ================================================================================================
 
+#[derive(Debug)]
 pub struct QueueInfo {
     pub name: String,
     pub message_count: u32,
@@ -46,11 +50,11 @@ impl QueueInfo {
 // MqClient
 // ================================================================================================
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MqClient {
-    conn: Option<Connection>,
-    conn_callback: Option<Box<dyn ConnectionCallback>>,
-    chan_callback: Option<Box<dyn ChannelCallback>>,
+    connection: Option<Connection>,
+    conn_callback: Option<Arc<dyn ConnectionCallback>>,
+    chan_callback: Option<Arc<dyn ChannelCallback>>,
     channel: Option<Channel>,
 }
 
@@ -76,7 +80,7 @@ impl MqClient {
         let conn = Connection::open(&arg).await?;
 
         Ok(Self {
-            conn: Some(conn),
+            connection: Some(conn),
             conn_callback: None,
             chan_callback: None,
             channel: None,
@@ -87,29 +91,41 @@ impl MqClient {
         // ignore error
         let _ = self.close_channel().await;
 
-        if let Some(c) = self.conn.take() {
+        if let Some(c) = self.connection.take() {
             c.close().await?
         };
 
         Ok(())
     }
 
+    pub fn connection(&self) -> PqxResult<&Connection> {
+        let conn = get_connection!(self)?;
+
+        Ok(conn)
+    }
+
+    pub fn channel(&self) -> PqxResult<&Channel> {
+        let chan = get_channel!(self)?;
+
+        Ok(chan)
+    }
+
     pub fn register_conn_callback<C>(&mut self, callback: C)
     where
         C: ConnectionCallback + 'static,
     {
-        self.conn_callback = Some(Box::new(callback));
+        self.conn_callback = Some(Arc::new(callback));
     }
 
     pub fn register_chan_callback<C>(&mut self, callback: C)
     where
         C: ChannelCallback + 'static,
     {
-        self.chan_callback = Some(Box::new(callback));
+        self.chan_callback = Some(Arc::new(callback));
     }
 
     pub async fn open_channel(&mut self, id: Option<u16>) -> PqxResult<()> {
-        let chan = if let Some(c) = &self.conn {
+        let chan = if let Some(c) = &self.connection {
             c.open_channel(id).await?
         } else {
             return Err("connection is empty".into());

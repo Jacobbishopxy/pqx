@@ -53,11 +53,8 @@ pub fn current_dir() -> PqxResult<PathBuf> {
     Ok(dir)
 }
 
-pub fn parent_dir() -> PqxResult<PathBuf> {
-    let dir = current_dir()?
-        .parent()
-        .ok_or("parent path fail")?
-        .to_owned();
+pub fn parent_dir(pb: PathBuf) -> PqxResult<PathBuf> {
+    let dir = pb.parent().ok_or("parent path fail")?.to_owned();
 
     Ok(dir)
 }
@@ -85,7 +82,7 @@ mod util_tests {
     #[test]
     fn cmd_conda_python_success() {
         let conda_env = "py310";
-        let dir = join_dir(parent_dir().unwrap(), "scripts").unwrap();
+        let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
         let script = "print_csv_in_line.py";
 
         println!("dir: {:?}", dir);

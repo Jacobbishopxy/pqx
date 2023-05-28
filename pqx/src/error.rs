@@ -15,6 +15,9 @@ pub enum PqxError {
     #[error(transparent)]
     RbMQ(amqprs::error::Error),
 
+    #[error(transparent)]
+    Serde(serde_json::Error),
+
     #[error("{0}")]
     Custom(&'static str),
 }
@@ -40,5 +43,11 @@ impl From<&'static str> for PqxError {
 impl From<amqprs::error::Error> for PqxError {
     fn from(e: amqprs::error::Error) -> Self {
         PqxError::RbMQ(e)
+    }
+}
+
+impl From<serde_json::Error> for PqxError {
+    fn from(e: serde_json::Error) -> Self {
+        PqxError::Serde(e)
     }
 }
