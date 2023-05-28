@@ -3,6 +3,8 @@
 //! date: 2023/05/22 23:15:04 Monday
 //! brief:
 
+use std::sync::Arc;
+
 use pqx::ec::cmd::*;
 use pqx::ec::util::*;
 use pqx::error::PqxResult;
@@ -35,7 +37,7 @@ async fn a_print_stderr(s: String) -> PqxResult<()> {
 async fn cmd_compose_and_exec_success1() {
     let CmdChild { child_stdout, .. } = gen_ping_cmd("github.com").unwrap();
 
-    let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), &print_stdout);
+    let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), Arc::new(print_stdout));
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -46,8 +48,8 @@ async fn cmd_compose_and_exec_success1() {
 #[tokio::test]
 async fn cmd_executor_success1() {
     let mut executor = CmdExecutor::new();
-    executor.register_stdout_fn(&print_stdout);
-    executor.register_stderr_fn(&print_stderr);
+    executor.register_stdout_fn(print_stdout);
+    executor.register_stderr_fn(print_stderr);
 
     let arg = CmdArg::Ping { addr: "github.com" };
     let res = executor.exec(1, arg).await;
@@ -69,7 +71,7 @@ async fn cmd_compose_and_exec_success2() {
     ))
     .unwrap();
 
-    let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), &print_stdout);
+    let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), Arc::new(print_stdout));
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -110,7 +112,7 @@ async fn cmd_compose_and_exec_success3() {
     ))
     .unwrap();
 
-    let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), &a_print_stdout);
+    let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), Arc::new(a_print_stdout));
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -120,8 +122,8 @@ async fn cmd_compose_and_exec_success3() {
 #[tokio::test]
 async fn cmd_executor_success3() {
     let mut executor = CmdAsyncExecutor::new();
-    executor.register_stdout_fn(&a_print_stdout);
-    executor.register_stderr_fn(&a_print_stderr);
+    executor.register_stdout_fn(Arc::new(a_print_stdout));
+    executor.register_stderr_fn(Arc::new(a_print_stderr));
 
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
@@ -148,7 +150,7 @@ async fn cmd_compose_and_exec_success4() {
     let CmdChild { child_stdout, .. } =
         gen_conda_python_cmd(conda_env, dir.to_str().unwrap(), script).unwrap();
 
-    let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), &a_print_stdout);
+    let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), Arc::new(a_print_stdout));
 
     let task = tokio::try_join!(so_tx, so_rx);
 
@@ -158,8 +160,8 @@ async fn cmd_compose_and_exec_success4() {
 #[tokio::test]
 async fn cmd_executor_success4() {
     let mut executor = CmdAsyncExecutor::new();
-    executor.register_stdout_fn(&a_print_stdout);
-    executor.register_stderr_fn(&a_print_stderr);
+    executor.register_stdout_fn(Arc::new(a_print_stdout));
+    executor.register_stderr_fn(Arc::new(a_print_stderr));
 
     let conda_env = "py310";
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();

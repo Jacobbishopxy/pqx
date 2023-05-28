@@ -7,6 +7,7 @@ use futures::future::{BoxFuture, Future};
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Child, ChildStderr, ChildStdout, Command, ExitStatus, Stdio};
+use std::sync::Arc;
 
 use tokio::sync::mpsc::Sender;
 
@@ -183,7 +184,7 @@ impl<'a> CmdArg<'a> {
 // CmdExecutor
 // ================================================================================================
 
-pub type SyncFn = &'static dyn Fn(String) -> PqxResult<()>;
+pub type SyncFn = Arc<dyn Fn(String) -> PqxResult<()>>;
 
 pub fn gen_execution<'a>(
     channel_buffer: usize,
@@ -259,14 +260,20 @@ impl CmdExecutor {
         self.stderr_fn.is_some()
     }
 
-    pub fn register_stdout_fn(&mut self, f: SyncFn) -> &mut Self {
-        self.stdout_fn = Some(f);
+    pub fn register_stdout_fn(
+        &mut self,
+        f: impl Fn(String) -> PqxResult<()> + 'static,
+    ) -> &mut Self {
+        self.stdout_fn = Some(Arc::new(f));
 
         self
     }
 
-    pub fn register_stderr_fn(&mut self, f: SyncFn) -> &mut Self {
-        self.stderr_fn = Some(f);
+    pub fn register_stderr_fn(
+        &mut self,
+        f: impl Fn(String) -> PqxResult<()> + 'static,
+    ) -> &mut Self {
+        self.stderr_fn = Some(Arc::new(f));
 
         self
     }
@@ -280,8 +287,8 @@ impl CmdExecutor {
 
         exec_cmd(
             channel_buffer,
-            self.stdout_fn.as_ref().map(|f| (child_stdout, *f)),
-            self.stderr_fn.as_ref().map(|f| (child_stderr, *f)),
+            self.stdout_fn.as_ref().map(|f| (child_stdout, f.clone())),
+            self.stderr_fn.as_ref().map(|f| (child_stderr, f.clone())),
         )
         .await?;
 
@@ -293,13 +300,14 @@ impl CmdExecutor {
 // CmdAsyncExecutor
 // ================================================================================================
 
-pub trait AsyncFn {
+pub trait AsyncFn: Send + Sync {
     fn call(&self, input: String) -> BoxFuture<'static, PqxResult<()>>;
 }
 
 impl<T, F> AsyncFn for T
 where
     T: Fn(String) -> F,
+    T: Send + Sync,
     F: Future<Output = PqxResult<()>> + Send + 'static,
 {
     fn call(&self, input: String) -> BoxFuture<'static, PqxResult<()>> {
@@ -310,10 +318,10 @@ where
 pub fn gen_async_execution<'a>(
     channel_buffer: usize,
     pipe: ChildStdPipe,
-    f: &'static dyn AsyncFn,
+    f: Arc<dyn AsyncFn>,
 ) -> (
-    impl Future<Output = Result<(), &'_ str>>,
-    impl Future<Output = Result<(), &'_ str>>,
+    impl Future<Output = Result<(), &'a str>>,
+    impl Future<Output = Result<(), &'a str>>,
 ) {
     let (std_tx, mut std_rx) = tokio::sync::mpsc::channel(channel_buffer);
 
@@ -340,11 +348,11 @@ pub fn gen_async_execution<'a>(
 
 async fn exec_async_cmd<'a>(
     channel_buffer: usize,
-    fo: Option<(ChildStdout, &'static dyn AsyncFn)>,
-    fe: Option<(ChildStderr, &'static dyn AsyncFn)>,
+    fo: Option<(ChildStdout, Arc<dyn AsyncFn>)>,
+    fe: Option<(ChildStderr, Arc<dyn AsyncFn>)>,
 ) -> PqxResult<()> {
-    let chn_o = fo.map(|(o, f)| gen_async_execution(channel_buffer, o.into(), f));
-    let chn_e = fe.map(|(e, f)| gen_async_execution(channel_buffer, e.into(), f));
+    let chn_o = fo.map(|(o, f)| gen_async_execution(channel_buffer, o.into(), f.clone()));
+    let chn_e = fe.map(|(e, f)| gen_async_execution(channel_buffer, e.into(), f.clone()));
 
     match (chn_o, chn_e) {
         (None, None) => {}
@@ -363,9 +371,10 @@ async fn exec_async_cmd<'a>(
     Ok(())
 }
 
+#[derive(Clone)]
 pub struct CmdAsyncExecutor {
-    stdout_fn: Option<&'static dyn AsyncFn>,
-    stderr_fn: Option<&'static dyn AsyncFn>,
+    stdout_fn: Option<Arc<dyn AsyncFn>>,
+    stderr_fn: Option<Arc<dyn AsyncFn>>,
 }
 
 impl CmdAsyncExecutor {
@@ -384,13 +393,13 @@ impl CmdAsyncExecutor {
         self.stderr_fn.is_some()
     }
 
-    pub fn register_stdout_fn(&mut self, f: &'static dyn AsyncFn) -> &mut Self {
+    pub fn register_stdout_fn(&mut self, f: Arc<dyn AsyncFn>) -> &mut Self {
         self.stdout_fn = Some(f);
 
         self
     }
 
-    pub fn register_stderr_fn(&mut self, f: &'static dyn AsyncFn) -> &mut Self {
+    pub fn register_stderr_fn(&mut self, f: Arc<dyn AsyncFn>) -> &mut Self {
         self.stderr_fn = Some(f);
 
         self
@@ -405,8 +414,8 @@ impl CmdAsyncExecutor {
 
         exec_async_cmd(
             channel_buffer,
-            self.stdout_fn.as_ref().map(|f| (child_stdout, *f)),
-            self.stderr_fn.as_ref().map(|f| (child_stderr, *f)),
+            self.stdout_fn.as_ref().map(|f| (child_stdout, f.clone())),
+            self.stderr_fn.as_ref().map(|f| (child_stderr, f.clone())),
         )
         .await?;
 
