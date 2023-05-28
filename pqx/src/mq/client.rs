@@ -16,7 +16,7 @@ use crate::error::PqxResult;
 // Conn
 // ================================================================================================
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ConnArg<'a> {
     pub host: &'a str,
     pub port: u16,
@@ -63,7 +63,7 @@ impl MqClient {
         Self::default()
     }
 
-    pub async fn connect(&mut self, conn_arg: ConnArg<'_>) -> PqxResult<Self> {
+    pub async fn connect(&mut self, conn_arg: ConnArg<'_>) -> PqxResult<()> {
         let ConnArg {
             host,
             port,
@@ -77,14 +77,9 @@ impl MqClient {
             arg.virtual_host(vh.as_ref());
         }
 
-        let conn = Connection::open(&arg).await?;
+        self.connection = Some(Connection::open(&arg).await?);
 
-        Ok(Self {
-            connection: Some(conn),
-            conn_callback: None,
-            chan_callback: None,
-            channel: None,
-        })
+        Ok(())
     }
 
     pub async fn disconnect(&mut self) -> PqxResult<()> {

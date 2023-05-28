@@ -3,34 +3,26 @@
 //! date: 2023/05/26 23:54:55 Friday
 //! brief:
 
-use amqprs::channel::BasicPublishArguments;
+use amqprs::channel::{BasicPublishArguments, Channel};
 use amqprs::BasicProperties;
 use serde::Serialize;
 
 use crate::error::PqxResult;
-
-use super::client::MqClient;
 
 // ================================================================================================
 // Publisher
 // ================================================================================================
 
 #[derive(Clone)]
-pub struct Publisher<C>
-where
-    C: AsRef<MqClient>,
-{
-    client: C,
+pub struct Publisher<'a> {
+    channel: &'a Channel,
     message_prop: BasicProperties,
 }
 
-impl<C> Publisher<C>
-where
-    C: AsRef<MqClient>,
-{
-    pub fn new(client: C) -> Self {
+impl<'a> Publisher<'a> {
+    pub fn new(channel: &'a Channel) -> Self {
         Self {
-            client,
+            channel,
             message_prop: BasicProperties::default(),
         }
     }
@@ -45,12 +37,14 @@ where
     {
         let args = BasicPublishArguments::new(exchange, rout);
         let content = serde_json::to_vec(&msg)?;
-        self.client
-            .as_ref()
-            .channel()?
+        self.channel
             .basic_publish(self.message_prop.clone(), content, args)
             .await?;
 
         Ok(())
+    }
+
+    pub async fn block(&self, secs: u64) {
+        tokio::time::sleep(tokio::time::Duration::from_secs(secs)).await;
     }
 }

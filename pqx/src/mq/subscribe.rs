@@ -3,12 +3,11 @@
 //! date: 2023/05/26 23:55:05 Friday
 //! brief:
 
-use amqprs::channel::BasicConsumeArguments;
+use amqprs::channel::{BasicConsumeArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::BasicProperties;
 use tokio::sync::Notify;
 
-use super::client::MqClient;
 use crate::error::PqxResult;
 
 // ================================================================================================
@@ -16,26 +15,24 @@ use crate::error::PqxResult;
 // ================================================================================================
 
 #[derive(Clone)]
-pub struct Subscriber<C, S>
+pub struct Subscriber<'a, S>
 where
-    C: AsRef<MqClient>,
     S: AsyncConsumer + Clone + Send + 'static,
 {
-    client: C,
-    consumer: S,
+    channel: &'a Channel,
     message_prop: BasicProperties,
+    consumer: S,
 }
 
-impl<C, S> Subscriber<C, S>
+impl<'a, S> Subscriber<'a, S>
 where
-    C: AsRef<MqClient>,
     S: AsyncConsumer + Clone + Send + 'static,
 {
-    pub fn new(client: C, consumer: S) -> Self {
+    pub fn new(channel: &'a Channel, consumer: S) -> Self {
         Self {
-            client,
-            consumer,
+            channel,
             message_prop: BasicProperties::default(),
+            consumer,
         }
     }
 
@@ -45,9 +42,7 @@ where
 
     pub async fn consume(&self, que: &str, consumer_tag: &str) -> PqxResult<()> {
         let args = BasicConsumeArguments::new(que, consumer_tag);
-        self.client
-            .as_ref()
-            .channel()?
+        self.channel
             .basic_consume(self.consumer.clone(), args)
             .await?;
 
