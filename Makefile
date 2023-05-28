@@ -39,3 +39,6 @@ build:
 
 clean:
 	cd pqx && cargo clean
+
+update:
+	cd pqx && cargo update

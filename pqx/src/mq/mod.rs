@@ -5,7 +5,6 @@
 
 pub mod client;
 pub mod consumer;
-pub mod message;
 pub mod publish;
 pub mod subscribe;
 

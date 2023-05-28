@@ -7,8 +7,7 @@ use amqprs::channel::{BasicAckArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
-
-use super::message::PqxMessage;
+use serde_json::Value;
 
 // ================================================================================================
 // PqxConsumer
@@ -35,15 +34,10 @@ impl AsyncConsumer for PqxDefaultConsumer {
         content: Vec<u8>,
     ) {
         // deserialize from subscriber msg
-        let msg: PqxMessage = match serde_json::from_slice(&content) {
-            Ok(m) => m,
-            Err(_) => PqxMessage::Undefined {
-                msg: "undefined pqx message".to_string(),
-            },
+        match serde_json::from_slice::<Value>(&content) {
+            Ok(m) => println!("msg: {:?}", m),
+            Err(e) => println!("err: {:?}", e),
         };
-
-        // TODO
-        println!("msg: {:?}", msg);
 
         let args = BasicAckArguments::new(deliver.delivery_tag(), false);
         channel.basic_ack(args).await.unwrap();

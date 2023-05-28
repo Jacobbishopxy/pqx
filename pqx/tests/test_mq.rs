@@ -4,14 +4,16 @@
 //! brief:
 
 use once_cell::sync::Lazy;
+use pqx::ec::cmd::CmdArg;
 use pqx::ec::util::*;
+use pqx::mq::client::{ConnArg, MqClient};
 use pqx::mq::consumer::PqxDefaultConsumer;
+use pqx::mq::publish::Publisher;
 use pqx::mq::subscribe::Subscriber;
-use pqx::mq::{
-    client::{ConnArg, MqClient},
-    message::PqxMessage,
-    publish::Publisher,
-};
+
+// ================================================================================================
+// const
+// ================================================================================================
 
 const HOST: &str = "localhost";
 const PORT: u16 = 5672;
@@ -30,6 +32,10 @@ static CONN_ARG: Lazy<ConnArg> = Lazy::new(|| ConnArg {
     pass: PASS,
     vhost: Some(VHOST),
 });
+
+// ================================================================================================
+// subscriber
+// ================================================================================================
 
 #[tokio::test]
 async fn mq_subscribe_success() {
@@ -64,6 +70,10 @@ async fn mq_subscribe_success() {
     subscriber.block().await;
 }
 
+// ================================================================================================
+// publisher
+// ================================================================================================
+
 #[tokio::test]
 async fn mq_publish_success() {
     let conn_arg = CONN_ARG.clone();
@@ -82,10 +92,10 @@ async fn mq_publish_success() {
 
     // 4. prepare message to be sent
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
-    let msg = PqxMessage::CondaPython {
-        env: "py310".to_string(),
-        dir: dir.to_string_lossy().to_string(),
-        script: "print_csv_in_line.py".to_string(),
+    let msg = CmdArg::CondaPython {
+        env: "py310",
+        dir: dir.to_str().unwrap(),
+        script: "print_csv_in_line.py",
     };
 
     // 5. send to RabbitMq

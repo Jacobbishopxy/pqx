@@ -237,6 +237,7 @@ async fn exec_cmd(
     Ok(())
 }
 
+#[derive(Clone)]
 pub struct CmdExecutor {
     stdout_fn: Option<SyncFn>,
     stderr_fn: Option<SyncFn>,
