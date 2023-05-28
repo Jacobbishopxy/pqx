@@ -12,3 +12,4 @@ target/
 
 /docker/rabbitmq/data/*
 !/docker/rabbitmq/data/.gitkeep
+Catalog.md
