@@ -8,6 +8,15 @@ pub mod consumer;
 pub mod publish;
 pub mod subscribe;
 
+pub use client::*;
+pub use consumer::*;
+pub use publish::*;
+pub use subscribe::*;
+
+// ================================================================================================
+// private macros
+// ================================================================================================
+
 macro_rules! get_connection {
     ($s:ident) => {
         $s.connection.as_ref().ok_or("connection is empty")

@@ -10,12 +10,10 @@ use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
-use pqx::ec::cmd::*;
 use pqx::ec::util::*;
+use pqx::ec::*;
 use pqx::error::PqxResult;
-use pqx::mq::client::{ConnArg, MqClient};
-use pqx::mq::publish::Publisher;
-use pqx::mq::subscribe::Subscriber;
+use pqx::mq::*;
 
 // ================================================================================================
 // const

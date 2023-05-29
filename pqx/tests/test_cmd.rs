@@ -5,8 +5,8 @@
 
 use std::sync::Arc;
 
-use pqx::ec::cmd::*;
 use pqx::ec::util::*;
+use pqx::ec::*;
 use pqx::error::PqxResult;
 
 fn print_stdout(s: String) -> PqxResult<()> {
