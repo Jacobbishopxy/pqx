@@ -1,0 +1,9 @@
+# author:	Jacob Xie
+# date:	2023/05/29 09:26:00 Monday
+# brief:
+
+host: localhost
+port: 5672
+user: dev
+pass: devpass
+vhost: devhost

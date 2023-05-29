@@ -5,6 +5,7 @@
 
 #![feature(impl_trait_in_assoc_type)]
 
+pub mod cfg;
 pub mod ec;
 pub mod error;
 pub mod mq;

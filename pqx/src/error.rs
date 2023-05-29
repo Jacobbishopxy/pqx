@@ -18,6 +18,9 @@ pub enum PqxError {
     #[error(transparent)]
     Serde(serde_json::Error),
 
+    #[error(transparent)]
+    SerdeYaml(serde_yaml::Error),
+
     #[error("{0}")]
     Custom(&'static str),
 }
@@ -49,5 +52,11 @@ impl From<amqprs::error::Error> for PqxError {
 impl From<serde_json::Error> for PqxError {
     fn from(e: serde_json::Error) -> Self {
         PqxError::Serde(e)
+    }
+}
+
+impl From<serde_yaml::Error> for PqxError {
+    fn from(e: serde_yaml::Error) -> Self {
+        PqxError::SerdeYaml(e)
     }
 }

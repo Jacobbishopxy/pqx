@@ -8,15 +8,17 @@ use std::sync::Arc;
 use amqprs::callbacks::{ChannelCallback, ConnectionCallback};
 use amqprs::channel::*;
 use amqprs::connection::{Connection, OpenConnectionArguments};
+use serde::{Deserialize, Serialize};
 
 use super::{get_channel, get_connection};
+use crate::cfg::{read_json, read_yaml, CfgMqConn};
 use crate::error::PqxResult;
 
 // ================================================================================================
 // Conn
 // ================================================================================================
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnArg<'a> {
     pub host: &'a str,
     pub port: u16,
@@ -80,6 +82,20 @@ impl MqClient {
         self.connection = Some(Connection::open(&arg).await?);
 
         Ok(())
+    }
+
+    pub async fn connect_by_yaml(&mut self, path: impl AsRef<str>) -> PqxResult<()> {
+        let cfg: CfgMqConn = read_yaml(path)?;
+        let conn_arg = ConnArg::from(&cfg);
+
+        self.connect(conn_arg).await
+    }
+
+    pub async fn connect_by_json(&mut self, path: impl AsRef<str>) -> PqxResult<()> {
+        let cfg: CfgMqConn = read_json(path)?;
+        let conn_arg = ConnArg::from(&cfg);
+
+        self.connect(conn_arg).await
     }
 
     pub async fn disconnect(&mut self) -> PqxResult<()> {

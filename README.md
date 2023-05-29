@@ -6,33 +6,28 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 ```txt
 .
-├── docker
-│   ├── rabbitmq
-│   │   ├── data
-│   │   └── docker-compose.yml
-│   ├── server
-│   └── README.md
 ├── pqx
 │   ├── src
 │   │   ├── ec
 │   │   │   ├── cmd.rs
+│   │   │   ├── exec.rs
 │   │   │   ├── mod.rs
 │   │   │   └── util.rs
 │   │   ├── mq
 │   │   │   ├── client.rs
 │   │   │   ├── consumer.rs
-│   │   │   ├── message.rs
 │   │   │   ├── mod.rs
 │   │   │   ├── publish.rs
 │   │   │   └── subscribe.rs
+│   │   ├── cfg.rs
 │   │   ├── error.rs
 │   │   └── lib.rs
 │   └── tests
 │       ├── test_cmd.rs
+│       ├── test_cmd_subscriber.rs
 │       └── test_mq.rs
 ├── scripts
-│   ├── print_csv_in_line.py
-│   └── sample.csv
+│   └── print_csv_in_line.py
 ├── LICENSE
 ├── Makefile
 └── README.md
