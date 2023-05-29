@@ -10,10 +10,10 @@ tree:
 # ================================================================================================
 
 rbmq-start:
-	cd docker && docker-compose up -d
+	cd docker/rabbitmq && docker-compose up -d
 
 rbmq-remove:
-	cd docker && docker-compose down
+	cd docker/rabbitmq && docker-compose down
 
 rbmq-adduser:
 	docker exec rabbitmq-dev bash -c "rabbitmqctl add_user dev devpass; rabbitmqctl add_vhost devhost; rabbitmqctl set_user_tags dev dev; rabbitmqctl set_permissions -p \"devhost\" \"dev\" \".*\" \".*\" \".*\""
@@ -28,7 +28,7 @@ rbmq-into:
 	docker exec -it rabbitmq-dev bash
 
 rbmq-logs:
-	cd docker && docker-compose logs -f --tail=10
+	cd docker/rabbitmq && docker-compose logs -f --tail=10
 
 # ================================================================================================
 # pqx

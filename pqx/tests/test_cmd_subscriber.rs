@@ -9,7 +9,7 @@ use amqprs::channel::{BasicAckArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
-use once_cell::sync::Lazy;
+// use once_cell::sync::Lazy;
 use pqx::ec::util::*;
 use pqx::ec::*;
 use pqx::error::PqxResult;
@@ -21,21 +21,30 @@ use pqx::mq::*;
 
 const HOST: &str = "localhost";
 const PORT: u16 = 5672;
-const USER: &str = "dev";
-const PASS: &str = "devpass";
-const VHOST: &str = "devhost";
+// const USER: &str = "dev";
+// const PASS: &str = "devpass";
+// const VHOST: &str = "devhost";
 const EXCHG: &str = "amq.direct";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
 const TAG: &str = "rbmq-rs-tag";
 
-static CONN_ARG: Lazy<ConnArg> = Lazy::new(|| ConnArg {
-    host: HOST,
-    port: PORT,
-    user: USER,
-    pass: PASS,
-    vhost: Some(VHOST),
-});
+// static CONN_ARG: Lazy<ConnArg> = Lazy::new(|| ConnArg {
+//     host: HOST,
+//     port: PORT,
+//     user: USER,
+//     pass: PASS,
+//     vhost: Some(VHOST),
+// });
+
+// ================================================================================================
+// help
+// ================================================================================================
+
+// PANIC if file not found!
+fn get_conn_yaml_path() -> std::path::PathBuf {
+    join_dir(current_dir().unwrap(), "conn.yml").unwrap()
+}
 
 // ================================================================================================
 // impl AsyncConsumer
@@ -101,11 +110,14 @@ async fn a_print_stderr(s: String) -> PqxResult<()> {
 
 #[tokio::test]
 async fn mq_subscribe_success() {
-    let conn_arg = CONN_ARG.clone();
-
+    // 0. create mq client
     let mut client = MqClient::new();
+
     // 1. connect to RabbitMq
-    let res = client.connect(conn_arg).await;
+    // let conn_arg = CONN_ARG.clone();
+    // let res = client.connect(conn_arg).await;
+    let pth = get_conn_yaml_path();
+    let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
 
     // 2. open channel
@@ -144,11 +156,14 @@ async fn mq_subscribe_success() {
 
 #[tokio::test]
 async fn mq_publish_success() {
-    let conn_arg = CONN_ARG.clone();
-
+    // 0. create mq client
     let mut client = MqClient::new();
+
     // 1. connect to RabbitMQ
-    let res = client.connect(conn_arg).await;
+    // let conn_arg = CONN_ARG.clone();
+    // let res = client.connect(conn_arg).await;
+    let pth = get_conn_yaml_path();
+    let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
 
     // 2. open channel
@@ -161,7 +176,7 @@ async fn mq_publish_success() {
     // 4. prepare message to be sent
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let msg = CmdArg::CondaPython {
-        env: "py310",
+        env: "py38",
         dir: dir.to_str().unwrap(),
         script: "print_csv_in_line.py",
     };
