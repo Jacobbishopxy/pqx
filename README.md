@@ -32,3 +32,7 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 ├── Makefile
 └── README.md
 ```
+
+## Todo
+
+- [Routing & Topics](https://www.rabbitmq.com/tutorials/tutorial-four-python.html)
