@@ -4,6 +4,7 @@
 //! brief:
 
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
     process::{Command, ExitStatus, Stdio},
 };
@@ -47,6 +48,26 @@ pub fn cmd_conda_python(env: &str, dir: &str, script: &str) -> PqxResult<ExitSta
     Ok(es)
 }
 
+pub fn cmd_docker<I, S>(container: &str, cmd: I) -> PqxResult<ExitStatus>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let es = Command::new("docker")
+        .arg("exec")
+        .arg(container)
+        .args(cmd)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()?;
+
+    Ok(es)
+}
+
+// ================================================================================================
+// Path
+// ================================================================================================
+
 pub fn current_dir() -> PqxResult<PathBuf> {
     let dir = std::env::current_dir()?;
 
@@ -84,11 +105,10 @@ mod util_tests {
         let conda_env = "py310";
         let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
         let script = "print_csv_in_line.py";
-
         println!("dir: {:?}", dir);
 
-        let cmd = cmd_conda_python(conda_env, dir.to_str().unwrap(), script);
-
-        println!("{:?}", cmd);
+        let res = cmd_conda_python(conda_env, dir.to_str().unwrap(), script);
+        assert!(res.is_ok());
+        println!("{:?}", res);
     }
 }

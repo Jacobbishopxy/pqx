@@ -4,6 +4,7 @@
 //! brief:
 
 use serde::{Deserialize, Serialize};
+use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read};
 use std::process::{Child, ChildStderr, ChildStdout, Command, Stdio};
 
@@ -35,7 +36,6 @@ impl From<ChildStderr> for ChildStdPipe {
 pub(crate) async fn send_child_std<R: Read>(r: R, tx: Sender<String>) -> PqxResult<()> {
     for line in BufReader::new(r).lines() {
         let line = line?;
-        // println!("send_child_std > {:?}", line);
 
         tx.send(line)
             .await
@@ -87,10 +87,14 @@ pub fn gen_ping_cmd(addr: &str) -> PqxResult<CmdChild> {
     Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
-pub fn gen_bash_cmd(cmd: &str) -> PqxResult<CmdChild> {
+pub fn gen_bash_cmd<I, S>(cmd: I) -> PqxResult<CmdChild>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     let mut child = Command::new("bash")
         .arg("-c")
-        .arg(cmd)
+        .args(cmd)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
@@ -101,22 +105,35 @@ pub fn gen_bash_cmd(cmd: &str) -> PqxResult<CmdChild> {
     Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
-pub fn gen_ssh_cmd(ip: &str, cmd: &str, user: Option<&str>) -> PqxResult<CmdChild> {
-    // ssh -t {ip} -o StrictHostKeyChecking=no '{cmd}'
-    // ssh -t {ip} -o StrictHostKeyChecking=no 'sudo -u {user} -H sh -c "cd ~; . ~/.bashrc; {cmd}"'
+pub fn gen_ssh_cmd<I, S>(ip: &str, user: &str, cmd: I) -> PqxResult<CmdChild>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let mut child = Command::new("ssh")
+        .arg(format!("{}@{}", user, ip))
+        .args(cmd)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
 
-    let mut command = Command::new("ssh");
-    command
-        .arg("-t")
-        .arg(ip)
-        .arg("-o")
-        .arg("StrictHostKeyChecking=no");
+    let child_stdout = child.stdout.take().unwrap();
+    let child_stderr = child.stderr.take().unwrap();
 
-    if let Some(usr) = user {
-        command.arg(format!("sudo -u {} -H sh -c", usr)).arg(cmd);
-    }
+    Ok(CmdChild::new(child, child_stdout, child_stderr))
+}
 
-    let mut child = command
+pub fn gen_sshpass_cmd<I, S>(ip: &str, user: &str, pass: &str, cmd: I) -> PqxResult<CmdChild>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let mut child = Command::new("sshpass")
+        .arg("-p")
+        .arg(pass)
+        .arg("ssh")
+        .arg(format!("{}@{}", user, ip))
+        .args(cmd)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
@@ -147,37 +164,73 @@ pub fn gen_conda_python_cmd(env: &str, dir: &str, script: &str) -> PqxResult<Cmd
     Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
+pub fn gen_docker_cmd<I, S>(container: &str, cmd: I) -> PqxResult<CmdChild>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let mut child = Command::new("docker")
+        .arg("exec")
+        .arg(container)
+        .args(cmd)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    let child_stdout = child.stdout.take().unwrap();
+    let child_stderr = child.stderr.take().unwrap();
+
+    Ok(CmdChild::new(child, child_stdout, child_stderr))
+}
+
 // ================================================================================================
 // CmdArg
 // ================================================================================================
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum CmdArg<'a> {
+pub enum CmdArg {
     Ping {
-        addr: &'a str,
+        addr: String,
     },
     Bash {
-        cmd: &'a str,
+        cmd: Vec<String>,
     },
     Ssh {
-        ip: &'a str,
-        cmd: &'a str,
-        user: Option<&'a str>,
+        ip: String,
+        user: String,
+        cmd: Vec<String>,
+    },
+    Sshpass {
+        ip: String,
+        user: String,
+        pass: String,
+        cmd: Vec<String>,
     },
     CondaPython {
-        env: &'a str,
-        dir: &'a str,
-        script: &'a str,
+        env: String,
+        dir: String,
+        script: String,
+    },
+    DockerExec {
+        container: String,
+        cmd: Vec<String>,
     },
 }
 
-impl<'a> CmdArg<'a> {
+impl CmdArg {
     pub fn gen_cmd(&self) -> PqxResult<CmdChild> {
         match self {
             CmdArg::Ping { addr } => gen_ping_cmd(addr),
             CmdArg::Bash { cmd } => gen_bash_cmd(cmd),
-            CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, cmd, *user),
+            CmdArg::Ssh { ip, cmd, user } => gen_ssh_cmd(ip, user, cmd),
+            CmdArg::Sshpass {
+                ip,
+                user,
+                pass,
+                cmd,
+            } => gen_sshpass_cmd(ip, user, pass, cmd),
             CmdArg::CondaPython { env, dir, script } => gen_conda_python_cmd(env, dir, script),
+            CmdArg::DockerExec { container, cmd } => gen_docker_cmd(container, cmd),
         }
     }
 }

@@ -9,6 +9,16 @@ use pqx::ec::util::*;
 use pqx::ec::*;
 use pqx::error::PqxResult;
 
+// ================================================================================================
+// Constants
+// ================================================================================================
+
+const CONDA_ENV: &str = "py38";
+
+// ================================================================================================
+// mock functions
+// ================================================================================================
+
 fn print_stdout(s: String) -> PqxResult<()> {
     println!("print_stdout: {:?}", s);
 
@@ -51,7 +61,9 @@ async fn cmd_executor_success1() {
     executor.register_stdout_fn(print_stdout);
     executor.register_stderr_fn(print_stderr);
 
-    let arg = CmdArg::Ping { addr: "github.com" };
+    let arg = CmdArg::Ping {
+        addr: "github.com".to_string(),
+    };
     let res = executor.exec(1, arg).await;
 
     println!("never reach!");
@@ -63,13 +75,12 @@ async fn cmd_executor_success1() {
 async fn cmd_compose_and_exec_success2() {
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
+    let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
+    let dir = format!("{}/../scripts", dir.to_str().to_owned().unwrap());
+    let cmd = vec!["cd", &dir, "&&", py, "-u", "print_csv_in_line.py"];
 
     println!("{:?}", py);
-    let CmdChild { child_stdout, .. } = gen_bash_cmd(&format!(
-        "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
-        std::env::current_dir().unwrap()
-    ))
-    .unwrap();
+    let CmdChild { child_stdout, .. } = gen_bash_cmd(&cmd).unwrap();
 
     let (so_tx, so_rx) = gen_execution(1, child_stdout.into(), Arc::new(print_stdout));
 
@@ -87,13 +98,17 @@ async fn cmd_executor_success2() {
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
+    let dir = format!("{}/../scripts", dir.to_str().to_owned().unwrap());
+    let cmd = vec![
+        "cd".to_string(),
+        dir,
+        "&&".to_string(),
+        py.to_string(),
+        "-u".to_string(),
+        "print_csv_in_line.py".to_string(),
+    ];
 
-    let cmd = format!(
-        "cd {} && {py} -u print_csv_in_line.py",
-        dir.to_str().unwrap()
-    );
-
-    let arg = CmdArg::Bash { cmd: &cmd };
+    let arg = CmdArg::Bash { cmd };
     let res = executor.exec(1, arg).await;
 
     assert!(res.is_ok());
@@ -105,12 +120,10 @@ async fn cmd_compose_and_exec_success3() {
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
+    let dir = format!("{}/../scripts", dir.to_str().to_owned().unwrap());
+    let cmd = vec!["cd", &dir, "&&", py, "-u", "print_csv_in_line.py"];
 
-    let CmdChild { child_stdout, .. } = gen_bash_cmd(&format!(
-        "cd {}/../scripts && {py} -u print_csv_in_line.py",
-        dir.to_str().unwrap()
-    ))
-    .unwrap();
+    let CmdChild { child_stdout, .. } = gen_bash_cmd(&cmd).unwrap();
 
     let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), Arc::new(a_print_stdout));
 
@@ -128,13 +141,17 @@ async fn cmd_executor_success3() {
     let py = cmd_which("python3").unwrap();
     let py = py.strip_suffix("\n").unwrap();
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
+    let dir = format!("{}/../scripts", dir.to_str().to_owned().unwrap());
+    let cmd = vec![
+        "cd".to_string(),
+        dir,
+        "&&".to_string(),
+        py.to_string(),
+        "-u".to_string(),
+        "print_csv_in_line.py".to_string(),
+    ];
 
-    let cmd = format!(
-        "cd {:?}/../scripts && {py} -u print_csv_in_line.py",
-        dir.to_str().unwrap()
-    );
-
-    let arg = CmdArg::Bash { cmd: &cmd };
+    let arg = CmdArg::Bash { cmd };
     let res = executor.exec(1, arg).await;
 
     assert!(res.is_ok());
@@ -143,12 +160,11 @@ async fn cmd_executor_success3() {
 
 #[tokio::test]
 async fn cmd_compose_and_exec_success4() {
-    let conda_env = "py310";
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let script = "print_csv_in_line.py";
 
     let CmdChild { child_stdout, .. } =
-        gen_conda_python_cmd(conda_env, dir.to_str().unwrap(), script).unwrap();
+        gen_conda_python_cmd(CONDA_ENV, dir.to_str().unwrap(), script).unwrap();
 
     let (so_tx, so_rx) = gen_async_execution(1, child_stdout.into(), Arc::new(a_print_stdout));
 
@@ -163,13 +179,12 @@ async fn cmd_executor_success4() {
     executor.register_stdout_fn(Arc::new(a_print_stdout));
     executor.register_stderr_fn(Arc::new(a_print_stderr));
 
-    let conda_env = "py310";
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
-    let script = "print_csv_in_line.py";
+    let script = "print_csv_in_line.py".to_string();
 
     let arg = CmdArg::CondaPython {
-        env: conda_env,
-        dir: dir.to_str().unwrap(),
+        env: CONDA_ENV.to_owned(),
+        dir: dir.to_str().unwrap().to_string(),
         script,
     };
     let res = executor.exec(1, arg).await;

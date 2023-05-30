@@ -176,9 +176,9 @@ async fn mq_publish_success() {
     // 4. prepare message to be sent
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let msg = CmdArg::CondaPython {
-        env: "py38",
-        dir: dir.to_str().unwrap(),
-        script: "print_csv_in_line.py",
+        env: "py38".to_owned(),
+        dir: dir.to_str().unwrap().to_string(),
+        script: "print_csv_in_line.py".to_string(),
     };
 
     // 5. send to RabbitMq
