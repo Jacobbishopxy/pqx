@@ -164,7 +164,7 @@ pub fn gen_conda_python_cmd(env: &str, dir: &str, script: &str) -> PqxResult<Cmd
     Ok(CmdChild::new(child, child_stdout, child_stderr))
 }
 
-pub fn gen_docker_cmd<I, S>(container: &str, cmd: I) -> PqxResult<CmdChild>
+pub fn gen_docker_exec_cmd<I, S>(container: &str, cmd: I) -> PqxResult<CmdChild>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -218,6 +218,73 @@ pub enum CmdArg {
 }
 
 impl CmdArg {
+    pub fn ping(addr: impl Into<String>) -> Self {
+        Self::Ping { addr: addr.into() }
+    }
+
+    pub fn bash<I, S>(cmd: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        String: From<S>,
+    {
+        Self::Bash {
+            cmd: cmd.into_iter().map(String::from).collect(),
+        }
+    }
+
+    pub fn ssh<I, S>(ip: impl Into<String>, user: impl Into<String>, cmd: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        String: From<S>,
+    {
+        Self::Ssh {
+            ip: ip.into(),
+            user: user.into(),
+            cmd: cmd.into_iter().map(String::from).collect(),
+        }
+    }
+
+    pub fn sshpass<I, S>(
+        ip: impl Into<String>,
+        user: impl Into<String>,
+        pass: impl Into<String>,
+        cmd: I,
+    ) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        String: From<S>,
+    {
+        Self::Sshpass {
+            ip: ip.into(),
+            user: user.into(),
+            pass: pass.into(),
+            cmd: cmd.into_iter().map(String::from).collect(),
+        }
+    }
+
+    pub fn conda_python(
+        env: impl Into<String>,
+        dir: impl Into<String>,
+        script: impl Into<String>,
+    ) -> Self {
+        Self::CondaPython {
+            env: env.into(),
+            dir: dir.into(),
+            script: script.into(),
+        }
+    }
+
+    pub fn docker_exec<I, S>(container: impl Into<String>, cmd: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        String: From<S>,
+    {
+        Self::DockerExec {
+            container: container.into(),
+            cmd: cmd.into_iter().map(String::from).collect(),
+        }
+    }
+
     pub fn gen_cmd(&self) -> PqxResult<CmdChild> {
         match self {
             CmdArg::Ping { addr } => gen_ping_cmd(addr),
@@ -230,7 +297,7 @@ impl CmdArg {
                 cmd,
             } => gen_sshpass_cmd(ip, user, pass, cmd),
             CmdArg::CondaPython { env, dir, script } => gen_conda_python_cmd(env, dir, script),
-            CmdArg::DockerExec { container, cmd } => gen_docker_cmd(container, cmd),
+            CmdArg::DockerExec { container, cmd } => gen_docker_exec_cmd(container, cmd),
         }
     }
 }

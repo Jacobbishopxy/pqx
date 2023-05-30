@@ -43,6 +43,10 @@ async fn a_print_stderr(s: String) -> PqxResult<()> {
     Ok(())
 }
 
+// ================================================================================================
+// Unit tests
+// ================================================================================================
+
 #[tokio::test]
 async fn cmd_compose_and_exec_success1() {
     let CmdChild { child_stdout, .. } = gen_ping_cmd("github.com").unwrap();
@@ -61,9 +65,7 @@ async fn cmd_executor_success1() {
     executor.register_stdout_fn(print_stdout);
     executor.register_stderr_fn(print_stderr);
 
-    let arg = CmdArg::Ping {
-        addr: "github.com".to_string(),
-    };
+    let arg = CmdArg::ping("github.com");
     let res = executor.exec(1, arg).await;
 
     println!("never reach!");
@@ -99,16 +101,9 @@ async fn cmd_executor_success2() {
     let py = py.strip_suffix("\n").unwrap();
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let dir = format!("{}/../scripts", dir.to_str().to_owned().unwrap());
-    let cmd = vec![
-        "cd".to_string(),
-        dir,
-        "&&".to_string(),
-        py.to_string(),
-        "-u".to_string(),
-        "print_csv_in_line.py".to_string(),
-    ];
+    let cmd = vec!["cd", &dir, "&&", py, "-u", "print_csv_in_line.py"];
 
-    let arg = CmdArg::Bash { cmd };
+    let arg = CmdArg::bash(cmd);
     let res = executor.exec(1, arg).await;
 
     assert!(res.is_ok());
@@ -142,16 +137,9 @@ async fn cmd_executor_success3() {
     let py = py.strip_suffix("\n").unwrap();
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let dir = format!("{}/../scripts", dir.to_str().to_owned().unwrap());
-    let cmd = vec![
-        "cd".to_string(),
-        dir,
-        "&&".to_string(),
-        py.to_string(),
-        "-u".to_string(),
-        "print_csv_in_line.py".to_string(),
-    ];
+    let cmd = vec!["cd", &dir, "&&", py, "-u", "print_csv_in_line.py"];
 
-    let arg = CmdArg::Bash { cmd };
+    let arg = CmdArg::bash(cmd);
     let res = executor.exec(1, arg).await;
 
     assert!(res.is_ok());
@@ -182,11 +170,7 @@ async fn cmd_executor_success4() {
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
     let script = "print_csv_in_line.py".to_string();
 
-    let arg = CmdArg::CondaPython {
-        env: CONDA_ENV.to_owned(),
-        dir: dir.to_str().unwrap().to_string(),
-        script,
-    };
+    let arg = CmdArg::conda_python(CONDA_ENV, dir.to_string_lossy(), script);
     let res = executor.exec(1, arg).await;
 
     assert!(res.is_ok());

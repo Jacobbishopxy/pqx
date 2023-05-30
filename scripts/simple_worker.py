@@ -23,7 +23,7 @@ print(" [*] Waiting for messages. To exit press CTRL+C")
 
 
 def callback(ch, method, properties, body):
-    print("[x] Received %r" % (body,))
+    print(" [x] Received %r" % (body,))
     if random.random() < 0.5:
         ch.basic_ack(delivery_tag=method.delivery_tag)
         time.sleep(5)
@@ -36,7 +36,7 @@ def callback(ch, method, properties, body):
             ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
             print(" [x] Rejected")
         else:
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
             print(" [x] Retried ends")
 
 
