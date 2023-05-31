@@ -33,6 +33,14 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 └── README.md
 ```
 
+## Quick startup
+
+1. Make sure RabbitMq has been started, simply by executing `make rbmq-start`. Check [docker-compose](./docker/rabbitmq/docker-compose.yml) for composing detail.
+
+1. Add user: `make rbmq-adduser`
+
+1. Declare DLX (dead letter exchange): `make rbmq-setdlx`
+
 ## Todo
 
 - [Routing & Topics](https://www.rabbitmq.com/tutorials/tutorial-four-python.html)

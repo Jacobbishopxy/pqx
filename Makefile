@@ -18,6 +18,10 @@ rbmq-remove:
 rbmq-adduser:
 	docker exec rabbitmq-dev bash -c "rabbitmqctl add_user dev devpass; rabbitmqctl add_vhost devhost; rabbitmqctl set_user_tags dev dev; rabbitmqctl set_permissions -p \"devhost\" \"dev\" \".*\" \".*\" \".*\""
 
+# applies the DLX "dev-dlx" to all queues
+rbmq-setdlx:
+	docker exec rabbitmq-dev bash -c "rabbitmqctl set_policy DLX \".*\" '{"dead-letter-exchange":\"dev-dlx\"}' --apply-to queues"
+
 rbmq-purgeque:
 	docker exec rabbitmq-dev bash -c "rabbitmqctl purge_queue --vhost=dev devque"
 

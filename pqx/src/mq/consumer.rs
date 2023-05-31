@@ -39,6 +39,10 @@ impl AsyncConsumer for PqxDefaultConsumer {
             Err(e) => println!("err: {:?}", e),
         };
 
+        // according to biz logic determine which following method to be called: ack/nack/reject/recover
+        // TODO: testing
+
+        // make sure 'delivery tag' has been
         let args = BasicAckArguments::new(deliver.delivery_tag(), false);
         channel.basic_ack(args).await.unwrap();
     }
