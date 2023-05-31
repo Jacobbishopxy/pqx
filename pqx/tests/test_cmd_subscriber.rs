@@ -125,7 +125,7 @@ async fn mq_subscribe_success() {
     assert!(res.is_ok());
 
     // 3. declare queue
-    let res = client.declare_queue(EXCHG, ROUT, QUE).await;
+    let res = client.declare_and_bind_queue(EXCHG, ROUT, QUE).await;
     assert!(res.is_ok());
 
     // 4. [IMPORTANT!!!] new consumer: cmd executor

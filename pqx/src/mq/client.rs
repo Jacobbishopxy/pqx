@@ -215,7 +215,7 @@ impl MqClient {
         Ok(())
     }
 
-    pub async fn declare_queue(
+    pub async fn declare_and_bind_queue(
         &self,
         exchange: &str,
         rout: &str,
@@ -232,6 +232,18 @@ impl MqClient {
             .await?;
 
         Ok(QueueInfo::new(name, message_count, consumer_count))
+    }
+
+    pub async fn declare_queue_with_args(
+        &self,
+        exchange: &str,
+        args: QueueDeclareArguments,
+    ) -> PqxResult<()> {
+        let chan = get_channel!(self)?;
+
+        chan.queue_declare(args).await?;
+
+        Ok(())
     }
 
     pub async fn delete_queue(&self, que: &str) -> PqxResult<()> {
