@@ -8,18 +8,14 @@
 //! 2. declare normal exchange and queue with dlx specified
 //! 3. publish message
 
-use std::sync::Arc;
-
 use amqprs::channel::*;
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver, FieldTable};
 use async_trait::async_trait;
+use chrono::{DateTime, Local};
 use pqx::ec::util::*;
-use pqx::ec::*;
-use pqx::error::PqxResult;
 use pqx::mq::*;
 use serde::{Deserialize, Serialize};
-
 // ================================================================================================
 // const
 // ================================================================================================
@@ -31,7 +27,7 @@ const TAG: &str = "rbmq-rs-tag";
 
 const DLX: &str = "rbmq-rs-dlx";
 const DL_ROUT: &str = "rbmq-rs-dl-rout";
-const DL_QUE: &str = "rbmq-rs-dl-queue";
+const DL_QUE: &str = "rbmq-rs-dl";
 
 // ================================================================================================
 // help
@@ -39,18 +35,6 @@ const DL_QUE: &str = "rbmq-rs-dl-queue";
 
 fn get_conn_yaml_path() -> std::path::PathBuf {
     join_dir(current_dir().unwrap(), "conn.yml").unwrap()
-}
-
-async fn a_print_stdout(s: String) -> PqxResult<()> {
-    println!("print_stdout: {:?}", s);
-
-    Ok(())
-}
-
-async fn a_print_stderr(s: String) -> PqxResult<()> {
-    println!("print_stderr: {:?}", s);
-
-    Ok(())
 }
 
 // ================================================================================================
@@ -61,6 +45,17 @@ async fn a_print_stderr(s: String) -> PqxResult<()> {
 struct DevMsg {
     to_dlx: bool,
     data: String,
+    time: DateTime<Local>,
+}
+
+impl DevMsg {
+    fn new(to_dlx: bool, data: &str) -> Self {
+        Self {
+            to_dlx,
+            data: data.to_string(),
+            time: Local::now(),
+        }
+    }
 }
 
 // ================================================================================================
@@ -68,15 +63,11 @@ struct DevMsg {
 // ================================================================================================
 
 #[derive(Clone)]
-struct DevDlxConsumer {
-    executor: CmdAsyncExecutor,
-}
+struct DevDlxConsumer {}
 
 impl DevDlxConsumer {
     fn new() -> Self {
-        Self {
-            executor: CmdAsyncExecutor::new(),
-        }
+        Self {}
     }
 }
 
@@ -99,7 +90,7 @@ impl AsyncConsumer for DevDlxConsumer {
             // if not a `DevMsg`, then throw it into dlx (`requeue=false`)
             let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
             let res = channel.basic_nack(args).await;
-            println!("msg cannot be recognozed, direct into dlx : {:?}", res);
+            println!("msg cannot be recognized, direct into dlx : {:?}", res);
             return;
         };
 
@@ -141,6 +132,8 @@ async fn declare_dlx_success() {
 
 #[tokio::test]
 async fn mq_subscribe_success() {
+    // cargo test --package pqx --test test_dlx -- mq_subscribe_success --exact --nocapture
+
     let mut client = MqClient::new();
 
     let pth = get_conn_yaml_path();
@@ -185,13 +178,7 @@ async fn mq_subscribe_success() {
     assert!(res.is_ok());
 
     // 4. consume
-    let mut consumer = DevDlxConsumer::new();
-    consumer
-        .executor
-        .register_stdout_fn(Arc::new(a_print_stdout));
-    consumer
-        .executor
-        .register_stderr_fn(Arc::new(a_print_stderr));
+    let consumer = DevDlxConsumer::new();
     let subscriber = Subscriber::new(chan, consumer);
 
     let res = subscriber.consume(QUE, TAG).await;
@@ -213,11 +200,11 @@ async fn publish_msg_to_dlx_success() {
 
     let publisher = Publisher::new(chan);
 
-    let msg = DevMsg {
-        to_dlx: true,
-        data: String::from("I'm going into dlx."),
-    };
+    let msg = DevMsg::new(true, "I'm going into dlx.");
+    let res = publisher.publish(EXCHG, ROUT, msg).await;
+    assert!(res.is_ok());
 
+    let msg = DevMsg::new(false, "Normal data.");
     let res = publisher.publish(EXCHG, ROUT, msg).await;
     assert!(res.is_ok());
 
