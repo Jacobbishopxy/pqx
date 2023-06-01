@@ -234,14 +234,19 @@ impl MqClient {
         Ok(QueueInfo::new(name, message_count, consumer_count))
     }
 
-    pub async fn declare_queue_with_args(
-        &self,
-        exchange: &str,
-        args: QueueDeclareArguments,
-    ) -> PqxResult<()> {
+    pub async fn declare_queue_with_args(&self, args: QueueDeclareArguments) -> PqxResult<()> {
         let chan = get_channel!(self)?;
 
         chan.queue_declare(args).await?;
+
+        Ok(())
+    }
+
+    pub async fn bind_queue(&self, exchange: &str, rout: &str, que: &str) -> PqxResult<()> {
+        let chan = get_channel!(self)?;
+
+        chan.queue_bind(QueueBindArguments::new(que, exchange, rout))
+            .await?;
 
         Ok(())
     }

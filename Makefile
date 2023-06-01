@@ -23,10 +23,10 @@ rbmq-setdlx:
 	docker exec rabbitmq-dev bash -c "rabbitmqctl set_policy DLX \".*\" '{"dead-letter-exchange":\"dev-dlx\"}' --apply-to queues"
 
 rbmq-purgeque:
-	docker exec rabbitmq-dev bash -c "rabbitmqctl purge_queue --vhost=dev devque"
+	docker exec rabbitmq-dev bash -c "rabbitmqctl purge_queue --vhost=devhost rbmq-rs-que"
 
 rbmq-deleteque:
-	docker exec rabbitmq-dev bash -c "rabbitmqctl delete_queue --vhost=dev devque"
+	docker exec rabbitmq-dev bash -c "rabbitmqctl delete_queue --vhost=devhost rbmq-rs-que"
 
 rbmq-into:
 	docker exec -it rabbitmq-dev bash

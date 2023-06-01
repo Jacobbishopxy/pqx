@@ -19,23 +19,10 @@ use pqx::mq::*;
 // const
 // ================================================================================================
 
-const HOST: &str = "localhost";
-const PORT: u16 = 5672;
-// const USER: &str = "dev";
-// const PASS: &str = "devpass";
-// const VHOST: &str = "devhost";
 const EXCHG: &str = "amq.direct";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
 const TAG: &str = "rbmq-rs-tag";
-
-// static CONN_ARG: Lazy<ConnArg> = Lazy::new(|| ConnArg {
-//     host: HOST,
-//     port: PORT,
-//     user: USER,
-//     pass: PASS,
-//     vhost: Some(VHOST),
-// });
 
 // ================================================================================================
 // help
@@ -114,8 +101,6 @@ async fn mq_subscribe_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMq
-    // let conn_arg = CONN_ARG.clone();
-    // let res = client.connect(conn_arg).await;
     let pth = get_conn_yaml_path();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
@@ -144,7 +129,7 @@ async fn mq_subscribe_success() {
     let res = subscriber.consume(QUE, TAG).await;
     assert!(res.is_ok());
 
-    println!("Start listening on {}:{} ...", HOST, PORT);
+    println!("Start listening on {}:{} ...", "HOST", "PORT");
 
     // 7. block
     subscriber.block().await;
@@ -160,8 +145,6 @@ async fn mq_publish_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMQ
-    // let conn_arg = CONN_ARG.clone();
-    // let res = client.connect(conn_arg).await;
     let pth = get_conn_yaml_path();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
