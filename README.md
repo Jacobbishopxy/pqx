@@ -41,6 +41,14 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 1. Declare DLX (dead letter exchange): `make rbmq-setdlx`
 
-## Todo
+## Test cases
 
-- [Routing & Topics](https://www.rabbitmq.com/tutorials/tutorial-four-python.html)
+- [cmd](./pqx/tests/test_cmd.rs): `cmd` module, commands composation and execution
+
+- [mq](./pqx/tests/test_mq.rs): `mq` module, basic pub/sub
+
+- [subscriber](./pqx/tests/test_subscriber.rs): pub/sub combined with a command executor
+
+- [dlx](./pqx/tests/test_dlx.rs): dead letter exchange
+
+- [topics](./pqx/tests/test_topics.rs): topic exchange

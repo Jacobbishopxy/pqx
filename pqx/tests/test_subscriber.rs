@@ -1,4 +1,4 @@
-//! file: test_cmd_subscriber.rs
+//! file: test_subscriber.rs
 //! author: Jacob Xie
 //! date: 2023/05/28 21:38:07 Sunday
 //! brief:
@@ -9,7 +9,6 @@ use amqprs::channel::{BasicAckArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
-// use once_cell::sync::Lazy;
 use pqx::ec::util::*;
 use pqx::ec::*;
 use pqx::error::PqxResult;
