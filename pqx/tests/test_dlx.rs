@@ -24,14 +24,13 @@ use serde::{Deserialize, Serialize};
 const EXCHG: &str = "rbmq-rs-exchange";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
-const TAG: &str = "rbmq-rs-tag";
 
 const DLX: &str = "rbmq-rs-dlx";
 const DL_ROUT: &str = "rbmq-rs-dl-rout";
 const DL_QUE: &str = "rbmq-rs-dl";
 
 // ================================================================================================
-// help
+// helper
 // ================================================================================================
 
 fn get_conn_yaml_path() -> std::path::PathBuf {
@@ -162,9 +161,9 @@ async fn mq_subscribe_success() {
 
     // 4. consume
     let consumer = DevDlxConsumer;
-    let subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = Subscriber::new(chan, consumer);
 
-    let res = subscriber.consume(QUE, TAG).await;
+    let res = subscriber.consume(QUE).await;
     assert!(res.is_ok());
     println!("Start listening on {}:{} ...", "HOST", "PORT");
     subscriber.block().await;

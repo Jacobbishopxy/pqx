@@ -17,22 +17,22 @@ use crate::error::PqxResult;
 #[derive(Clone)]
 pub struct Subscriber<'a, S>
 where
-    S: AsyncConsumer + Clone + Send + 'static,
+    S: AsyncConsumer + Send + 'static,
 {
     channel: &'a Channel,
     message_prop: BasicProperties,
-    consumer: S,
+    consumer: Option<S>,
 }
 
 impl<'a, S> Subscriber<'a, S>
 where
-    S: AsyncConsumer + Clone + Send + 'static,
+    S: AsyncConsumer + Send + 'static,
 {
     pub fn new(channel: &'a Channel, consumer: S) -> Self {
         Self {
             channel,
             message_prop: BasicProperties::default(),
-            consumer,
+            consumer: Some(consumer),
         }
     }
 
@@ -40,11 +40,15 @@ where
         self.message_prop = message_properties;
     }
 
-    pub async fn consume(&self, que: &str, consumer_tag: &str) -> PqxResult<()> {
-        let args = BasicConsumeArguments::new(que, consumer_tag);
-        self.channel
-            .basic_consume(self.consumer.clone(), args)
-            .await?;
+    pub async fn consume(&mut self, que: &str) -> PqxResult<()> {
+        let consumer = if let Some(c) = self.consumer.take() {
+            c
+        } else {
+            return Err("consumer is empty".into());
+        };
+        let args = BasicConsumeArguments::new(que, "");
+
+        self.channel.basic_consume(consumer, args).await?;
 
         Ok(())
     }

@@ -25,7 +25,7 @@ const TOPIC_QUE1: &str = "rbmq-rs-tq1";
 const TOPIC_QUE2: &str = "rbmq-rs-tq2";
 
 // ================================================================================================
-// help
+// helper
 // ================================================================================================
 
 fn get_conn_yaml_path() -> std::path::PathBuf {
@@ -124,9 +124,9 @@ async fn mq_subscribe1_success() {
 
     // 1. consume
     let consumer = DevTopicConsumer;
-    let subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = Subscriber::new(chan, consumer);
 
-    let res = subscriber.consume(TOPIC_QUE1, "q1").await;
+    let res = subscriber.consume(TOPIC_QUE1).await;
     assert!(res.is_ok());
 
     subscriber.block().await;
@@ -145,9 +145,9 @@ async fn mq_subscribe2_success() {
 
     // 1. consume
     let consumer = DevTopicConsumer;
-    let subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = Subscriber::new(chan, consumer);
 
-    let res = subscriber.consume(TOPIC_QUE2, "q2").await;
+    let res = subscriber.consume(TOPIC_QUE2).await;
     assert!(res.is_ok());
 
     subscriber.block().await;

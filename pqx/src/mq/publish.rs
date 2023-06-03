@@ -44,6 +44,23 @@ impl<'a> Publisher<'a> {
         Ok(())
     }
 
+    pub async fn publish_with_props<M>(
+        &self,
+        exchange: &str,
+        rout: &str,
+        msg: M,
+        props: BasicProperties,
+    ) -> PqxResult<()>
+    where
+        M: Serialize,
+    {
+        let args = BasicPublishArguments::new(exchange, rout);
+        let content = serde_json::to_vec(&msg)?;
+        self.channel.basic_publish(props, content, args).await?;
+
+        Ok(())
+    }
+
     pub async fn block(&self, secs: u64) {
         tokio::time::sleep(tokio::time::Duration::from_secs(secs)).await;
     }

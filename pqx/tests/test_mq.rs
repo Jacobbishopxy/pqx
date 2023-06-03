@@ -46,6 +46,7 @@ async fn mq_subscribe_success() {
     // 2. open channel
     let res = client.open_channel(None).await;
     assert!(res.is_ok());
+    let chan = client.channel().unwrap();
 
     // 3. declare queue
     let res = client.declare_and_bind_queue(EXCHG, ROUT, QUE).await;
@@ -55,7 +56,7 @@ async fn mq_subscribe_success() {
     let consumer = PqxDefaultConsumer;
 
     // 5. new subscriber
-    let subscriber = Subscriber::new(client.channel().unwrap(), consumer);
+    let mut subscriber = Subscriber::new(chan, consumer);
 
     // 6. consume
     let res = subscriber.consume(QUE, TAG).await;
@@ -83,17 +84,14 @@ async fn mq_publish_success() {
     // 2. open channel
     let res = client.open_channel(None).await;
     assert!(res.is_ok());
+    let chan = client.channel().unwrap();
 
     // 3. new publisher
-    let publisher = Publisher::new(client.channel().unwrap());
+    let publisher = Publisher::new(chan);
 
     // 4. prepare message to be sent
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
-    let msg = CmdArg::CondaPython {
-        env: "py310".to_string(),
-        dir: dir.to_str().unwrap().to_string(),
-        script: "print_csv_in_line.py".to_string(),
-    };
+    let msg = CmdArg::conda_python("py310", dir.to_str().unwrap(), "print_csv_in_line.py");
 
     // 5. send to RabbitMq
     let res = publisher.publish(EXCHG, ROUT, msg).await;

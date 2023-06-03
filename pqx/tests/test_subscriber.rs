@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use amqprs::channel::{BasicAckArguments, Channel};
+use amqprs::channel::{BasicAckArguments, Channel, ExchangeType};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
@@ -18,13 +18,12 @@ use pqx::mq::*;
 // const
 // ================================================================================================
 
-const EXCHG: &str = "amq.direct";
+const EXCHG: &str = "rbmq-rs-exchange";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
-const TAG: &str = "rbmq-rs-tag";
 
 // ================================================================================================
-// help
+// helper
 // ================================================================================================
 
 // PANIC if file not found!
@@ -108,7 +107,9 @@ async fn mq_subscribe_success() {
     let res = client.open_channel(None).await;
     assert!(res.is_ok());
 
-    // 3. declare queue
+    // 3. declare exchange & queue
+    let res = client.declare_exchange(EXCHG, ExchangeType::Direct).await;
+    assert!(res.is_ok());
     let res = client.declare_and_bind_queue(EXCHG, ROUT, QUE).await;
     assert!(res.is_ok());
 
@@ -122,10 +123,10 @@ async fn mq_subscribe_success() {
         .register_stderr_fn(Arc::new(a_print_stderr));
 
     // 5. new subscriber
-    let subscriber = Subscriber::new(client.channel().unwrap(), consumer);
+    let mut subscriber = Subscriber::new(client.channel().unwrap(), consumer);
 
     // 6. consume
-    let res = subscriber.consume(QUE, TAG).await;
+    let res = subscriber.consume(QUE).await;
     assert!(res.is_ok());
 
     println!("Start listening on {}:{} ...", "HOST", "PORT");
