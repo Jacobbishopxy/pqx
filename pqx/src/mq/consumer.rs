@@ -7,6 +7,7 @@ use amqprs::channel::{BasicAckArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
+use serde::Deserialize;
 use serde_json::Value;
 
 // ================================================================================================
@@ -37,3 +38,14 @@ impl AsyncConsumer for PqxDefaultConsumer {
         channel.basic_ack(args).await.unwrap();
     }
 }
+
+// ================================================================================================
+// helper
+// ================================================================================================
+
+#[async_trait]
+pub trait PqxConsumer<'a, D: Deserialize<'a>> {
+    async fn csm(&mut self, channel: &Channel, content: D);
+}
+
+// impl<T, D> PqxConsumer<D> for T {}
