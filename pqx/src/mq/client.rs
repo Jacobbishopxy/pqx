@@ -250,7 +250,7 @@ impl MqClient {
         dlx_rout: &str,
         ttl: Option<i64>,
     ) -> PqxResult<()> {
-        let mut args = QueueDeclareArguments::new(que);
+        let mut args = QueueDeclareArguments::durable_client_named(que);
         let mut ft = FieldTable::new();
         ft.insert(
             FieldName::try_from("x-dead-letter-exchange").unwrap(),
@@ -273,7 +273,15 @@ impl MqClient {
         Ok(())
     }
 
-    pub async fn bind_queue(&self, exchange: &str, rout: &str, que: &str) -> PqxResult<()> {
+    pub async fn bind_queue(&self, args: QueueBindArguments) -> PqxResult<()> {
+        let chan = get_channel!(self)?;
+
+        chan.queue_bind(args).await?;
+
+        Ok(())
+    }
+
+    pub async fn bind_simple_queue(&self, exchange: &str, rout: &str, que: &str) -> PqxResult<()> {
         let chan = get_channel!(self)?;
 
         chan.queue_bind(QueueBindArguments::new(que, exchange, rout))

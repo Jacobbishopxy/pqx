@@ -156,7 +156,7 @@ async fn mq_subscribe_success() {
     println!("{:?}", res);
     assert!(res.is_ok());
 
-    let res = client.bind_queue(EXCHG, ROUT, QUE).await;
+    let res = client.bind_simple_queue(EXCHG, ROUT, QUE).await;
     assert!(res.is_ok());
 
     // 4. consume
