@@ -8,6 +8,7 @@ use std::sync::Arc;
 use amqprs::callbacks::{ChannelCallback, ConnectionCallback};
 use amqprs::channel::*;
 use amqprs::connection::{Connection, OpenConnectionArguments};
+use amqprs::{FieldName, FieldTable, FieldValue};
 use serde::{Deserialize, Serialize};
 
 use super::{get_channel, get_connection};
@@ -215,6 +216,14 @@ impl MqClient {
         Ok(())
     }
 
+    pub async fn declare_queue(&self, args: QueueDeclareArguments) -> PqxResult<()> {
+        let chan = get_channel!(self)?;
+
+        chan.queue_declare(args).await?;
+
+        Ok(())
+    }
+
     pub async fn declare_and_bind_queue(
         &self,
         exchange: &str,
@@ -234,10 +243,32 @@ impl MqClient {
         Ok(QueueInfo::new(name, message_count, consumer_count))
     }
 
-    pub async fn declare_queue_with_args(&self, args: QueueDeclareArguments) -> PqxResult<()> {
-        let chan = get_channel!(self)?;
+    pub async fn declare_queue_with_dlx(
+        &self,
+        que: &str,
+        dlx: &str,
+        dlx_rout: &str,
+        ttl: Option<i64>,
+    ) -> PqxResult<()> {
+        let mut args = QueueDeclareArguments::new(que);
+        let mut ft = FieldTable::new();
+        ft.insert(
+            FieldName::try_from("x-dead-letter-exchange").unwrap(),
+            FieldValue::from(String::from(dlx)),
+        );
+        ft.insert(
+            FieldName::try_from("x-dead-letter-routing-key").unwrap(),
+            FieldValue::from(String::from(dlx_rout)),
+        );
+        if let Some(t) = ttl {
+            ft.insert(
+                FieldName::try_from("x-message-ttl").unwrap(),
+                FieldValue::l(t),
+            );
+        }
+        args.arguments(ft);
 
-        chan.queue_declare(args).await?;
+        self.declare_queue(args).await?;
 
         Ok(())
     }

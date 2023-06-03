@@ -10,12 +10,13 @@
 
 use amqprs::channel::*;
 use amqprs::consumer::AsyncConsumer;
-use amqprs::{BasicProperties, Deliver, FieldTable};
+use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
 use chrono::{DateTime, Local};
 use pqx::ec::util::*;
 use pqx::mq::*;
 use serde::{Deserialize, Serialize};
+
 // ================================================================================================
 // const
 // ================================================================================================
@@ -63,13 +64,7 @@ impl DevMsg {
 // ================================================================================================
 
 #[derive(Clone)]
-struct DevDlxConsumer {}
-
-impl DevDlxConsumer {
-    fn new() -> Self {
-        Self {}
-    }
-}
+struct DevDlxConsumer;
 
 #[async_trait]
 impl AsyncConsumer for DevDlxConsumer {
@@ -94,6 +89,7 @@ impl AsyncConsumer for DevDlxConsumer {
             return;
         };
 
+        // explicit send msg to dlx
         if msg.to_dlx {
             let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
             let res = channel.basic_nack(args).await;
@@ -107,13 +103,13 @@ impl AsyncConsumer for DevDlxConsumer {
 }
 
 // ================================================================================================
-// subscriber
+// test
 // ================================================================================================
 
 #[tokio::test]
 async fn declare_dlx_success() {
+    // 0. client connection and open channel
     let mut client = MqClient::new();
-
     let pth = get_conn_yaml_path();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
@@ -134,8 +130,8 @@ async fn declare_dlx_success() {
 async fn mq_subscribe_success() {
     // cargo test --package pqx --test test_dlx -- mq_subscribe_success --exact --nocapture
 
+    // 0. client connection and open channel
     let mut client = MqClient::new();
-
     let pth = get_conn_yaml_path();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
@@ -147,7 +143,7 @@ async fn mq_subscribe_success() {
     assert!(res.is_ok());
     let chan = client.channel().unwrap();
 
-    // 2. set qos
+    // 2. set qos (quality of service)
     let args = BasicQosArguments::new(0, 1, true);
     let res = chan.basic_qos(args).await;
     assert!(res.is_ok());
@@ -155,22 +151,9 @@ async fn mq_subscribe_success() {
     // 3. declare a queue with args which explicit specified "x-dead-letter-exchange" to dlx,
     // "x-dead-letter-routing-key" to dlx routing key, and bind to the declared exchange
     // [temporary workaround] `insert`
-    let mut args = QueueDeclareArguments::new(QUE);
-    let mut ft = FieldTable::new();
-    ft.insert(
-        "x-dead-letter-exchange".try_into().unwrap(),
-        DLX.try_into().unwrap(),
-    );
-    ft.insert(
-        "x-dead-letter-routing-key".try_into().unwrap(),
-        DL_ROUT.try_into().unwrap(),
-    );
-    // ft.insert(
-    //     "x-message-ttl".try_into().unwrap(),
-    //     "60000".try_into().unwrap(),
-    // );
-    args.arguments(ft);
-    let res = client.declare_queue_with_args(args).await;
+    let res = client
+        .declare_queue_with_dlx(QUE, DLX, DL_ROUT, Some(6000))
+        .await;
     println!("{:?}", res);
     assert!(res.is_ok());
 
@@ -178,7 +161,7 @@ async fn mq_subscribe_success() {
     assert!(res.is_ok());
 
     // 4. consume
-    let consumer = DevDlxConsumer::new();
+    let consumer = DevDlxConsumer;
     let subscriber = Subscriber::new(chan, consumer);
 
     let res = subscriber.consume(QUE, TAG).await;
@@ -189,8 +172,8 @@ async fn mq_subscribe_success() {
 
 #[tokio::test]
 async fn publish_msg_to_dlx_success() {
+    // 0. client connection and open channel
     let mut client = MqClient::new();
-
     let pth = get_conn_yaml_path();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
@@ -198,15 +181,17 @@ async fn publish_msg_to_dlx_success() {
     assert!(res.is_ok());
     let chan = client.channel().unwrap();
 
+    // 1. publisher
     let publisher = Publisher::new(chan);
 
-    let msg = DevMsg::new(true, "I'm going into dlx.");
+    // 2. send msg
+    let msg = DevMsg::new(true, "I'm going into dlx."); // explicit to dlx
     let res = publisher.publish(EXCHG, ROUT, msg).await;
     assert!(res.is_ok());
-
     let msg = DevMsg::new(false, "Normal data.");
     let res = publisher.publish(EXCHG, ROUT, msg).await;
     assert!(res.is_ok());
 
+    // 3. block until msg has been sent
     publisher.block(1).await;
 }

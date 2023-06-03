@@ -52,7 +52,7 @@ async fn mq_subscribe_success() {
     assert!(res.is_ok());
 
     // 4. new consumer
-    let consumer = PqxDefaultConsumer::new();
+    let consumer = PqxDefaultConsumer;
 
     // 5. new subscriber
     let subscriber = Subscriber::new(client.channel().unwrap(), consumer);

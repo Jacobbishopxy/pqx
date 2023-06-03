@@ -14,15 +14,7 @@ use serde_json::Value;
 // ================================================================================================
 
 #[derive(Clone)]
-pub struct PqxDefaultConsumer {
-    //
-}
-
-impl PqxDefaultConsumer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+pub struct PqxDefaultConsumer;
 
 #[async_trait]
 impl AsyncConsumer for PqxDefaultConsumer {
@@ -40,9 +32,7 @@ impl AsyncConsumer for PqxDefaultConsumer {
         };
 
         // according to biz logic determine which following method to be called: ack/nack/reject/recover
-        // TODO: testing
 
-        // make sure 'delivery tag' has been
         let args = BasicAckArguments::new(deliver.delivery_tag(), false);
         channel.basic_ack(args).await.unwrap();
     }
