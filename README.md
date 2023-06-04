@@ -4,13 +4,24 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 ## Structure
 
+- `pqx-util`: util functions
+
+- `pqx`
+
+  - `ec`: commands and executors
+
+  - `mq`: publisher and subscriber
+
+- `mq-api`: RabbitMQ management API
+
 ```txt
 .
 ├── mq-api
 │   └── src
 │       ├── client.rs
 │       ├── error.rs
-│       └── lib.rs
+│       ├── lib.rs
+│       └── query.rs
 ├── pqx
 │   ├── src
 │   │   ├── ec

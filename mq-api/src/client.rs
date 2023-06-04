@@ -38,7 +38,7 @@ impl MqClient {
         }
     }
 
-    pub async fn _get<P: AsRef<str>, R: DeserializeOwned>(&self, path: P) -> MqApiResult<R> {
+    pub async fn get<P: AsRef<str>, R: DeserializeOwned>(&self, path: P) -> MqApiResult<R> {
         let pth = format!("{}/{}", self.url, path.as_ref());
         let encoded = parse_url(pth)?;
         let res = self.client.get(encoded).send().await?.json::<R>().await?;
@@ -46,7 +46,7 @@ impl MqClient {
         Ok(res)
     }
 
-    pub async fn _post<P: AsRef<str>, T: Serialize, R: DeserializeOwned>(
+    pub async fn post<P: AsRef<str>, T: Serialize, R: DeserializeOwned>(
         &self,
         path: P,
         req: &T,
@@ -65,7 +65,7 @@ impl MqClient {
         Ok(res)
     }
 
-    pub async fn _put<P: AsRef<str>, T: Serialize, R: DeserializeOwned>(
+    pub async fn put<P: AsRef<str>, T: Serialize, R: DeserializeOwned>(
         &self,
         path: P,
         req: &T,
@@ -120,9 +120,9 @@ mod test_client {
     async fn simple_get() {
         let hm = HEADER.clone();
 
-        let client = MqClient::new_with_headers("http://localhost:15672", hm);
+        let client = MqClient::new_with_headers("http://localhost:15672/api", hm);
 
-        let res = client._get::<_, serde_json::Value>("api/overview").await;
+        let res = client.get::<_, serde_json::Value>("overview").await;
         assert!(res.is_ok());
         let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
