@@ -3,38 +3,9 @@
 //! date: 2023/05/29 08:40:45 Monday
 //! brief:
 
-use std::fs::File;
+use serde::Deserialize;
 
-use serde::{de::DeserializeOwned, Deserialize};
-
-use crate::error::PqxResult;
 use crate::mq::ConnArg;
-
-// ================================================================================================
-// read config file
-// ================================================================================================
-
-pub fn read_yaml<P, T>(path: P) -> PqxResult<T>
-where
-    P: AsRef<str>,
-    T: DeserializeOwned,
-{
-    let f = File::open(path.as_ref())?;
-    let d: T = serde_yaml::from_reader(f)?;
-
-    Ok(d)
-}
-
-pub fn read_json<P, T>(path: P) -> PqxResult<T>
-where
-    P: AsRef<str>,
-    T: DeserializeOwned,
-{
-    let f = File::open(path.as_ref())?;
-    let d: T = serde_json::from_reader(f)?;
-
-    Ok(d)
-}
 
 // ================================================================================================
 // Configs
@@ -73,7 +44,7 @@ mod test_cfg {
     #[test]
     fn read_yaml_success() {
         let yaml_path = join_dir(current_dir().unwrap(), "conn.yml").unwrap();
-        let cfg: CfgMqConn = read_yaml(yaml_path.to_str().unwrap()).unwrap();
+        let cfg: CfgMqConn = pqx_util::read_yaml(yaml_path.to_str().unwrap()).unwrap();
 
         println!("{:?}", cfg);
     }

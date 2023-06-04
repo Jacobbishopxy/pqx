@@ -19,7 +19,7 @@ pub enum PqxError {
     Serde(serde_json::Error),
 
     #[error(transparent)]
-    SerdeYaml(serde_yaml::Error),
+    Util(pqx_util::PqxUtilError),
 
     #[error("{0}")]
     Custom(&'static str),
@@ -55,8 +55,8 @@ impl From<serde_json::Error> for PqxError {
     }
 }
 
-impl From<serde_yaml::Error> for PqxError {
-    fn from(e: serde_yaml::Error) -> Self {
-        PqxError::SerdeYaml(e)
+impl From<pqx_util::PqxUtilError> for PqxError {
+    fn from(e: pqx_util::PqxUtilError) -> Self {
+        PqxError::Util(e)
     }
 }

@@ -20,7 +20,6 @@ const VHOST: &str = "devhost";
 const EXCHG: &str = "amq.direct";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
-const TAG: &str = "rbmq-rs-tag";
 
 static CONN_ARG: Lazy<ConnArg> = Lazy::new(|| ConnArg {
     host: HOST,
@@ -59,7 +58,7 @@ async fn mq_subscribe_success() {
     let mut subscriber = Subscriber::new(chan, consumer);
 
     // 6. consume
-    let res = subscriber.consume(QUE, TAG).await;
+    let res = subscriber.consume(QUE).await;
     assert!(res.is_ok());
 
     println!("Start listening on {}:{} ...", HOST, PORT);

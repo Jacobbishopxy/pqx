@@ -9,10 +9,11 @@ use amqprs::callbacks::{ChannelCallback, ConnectionCallback};
 use amqprs::channel::*;
 use amqprs::connection::{Connection, OpenConnectionArguments};
 use amqprs::{FieldName, FieldTable, FieldValue};
+use pqx_util::{read_json, read_yaml};
 use serde::{Deserialize, Serialize};
 
 use super::{get_channel, get_connection};
-use crate::cfg::{read_json, read_yaml, CfgMqConn};
+use crate::cfg::CfgMqConn;
 use crate::error::PqxResult;
 
 // ================================================================================================
