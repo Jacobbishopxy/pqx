@@ -6,6 +6,11 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 ```txt
 .
+├── mq-api
+│   └── src
+│       ├── client.rs
+│       ├── error.rs
+│       └── lib.rs
 ├── pqx
 │   ├── src
 │   │   ├── ec
@@ -29,6 +34,11 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       ├── test_mq.rs
 │       ├── test_subscriber.rs
 │       └── test_topics.rs
+├── pqx-util
+│   └── src
+│       ├── cfg.rs
+│       ├── error.rs
+│       └── lib.rs
 ├── scripts
 │   └── print_csv_in_line.py
 ├── LICENSE

@@ -3,7 +3,7 @@
 //! date: 2023/06/04 08:51:50 Sunday
 //! brief:
 
-use reqwest::{ClientBuilder, Url};
+use reqwest::{header::HeaderMap, ClientBuilder, Url};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::MqApiResult;
@@ -23,6 +23,18 @@ impl MqClient {
         Self {
             url: url.to_owned(),
             client: ClientBuilder::new().build().expect("build success"),
+        }
+    }
+
+    pub fn new_with_headers(url: &str, headers: HeaderMap) -> Self {
+        let c = ClientBuilder::new()
+            .default_headers(headers)
+            .build()
+            .expect("build success");
+
+        Self {
+            url: url.to_owned(),
+            client: c,
         }
     }
 
@@ -79,4 +91,40 @@ impl MqClient {
 
 fn parse_url<T: AsRef<str>>(url: T) -> MqApiResult<Url> {
     Ok(Url::parse(url.as_ref()).map_err(|_| "url encoded fail")?)
+}
+
+// ================================================================================================
+// test
+//
+// development documentation (docker service of RMQ): `http://localhost:15672/api/index.html`
+// ================================================================================================
+
+#[cfg(test)]
+mod test_client {
+    use once_cell::sync::Lazy;
+    use reqwest::header::{HeaderValue, AUTHORIZATION};
+
+    use super::*;
+
+    static HEADER: Lazy<HeaderMap> = Lazy::new(|| {
+        let mut hm = HeaderMap::new();
+        hm.insert(
+            AUTHORIZATION,
+            HeaderValue::from_static("Basic YWRtaW46YWRtaW4="), // admin:admin
+        );
+
+        hm
+    });
+
+    #[tokio::test]
+    async fn simple_get() {
+        let hm = HEADER.clone();
+
+        let client = MqClient::new_with_headers("http://localhost:15672", hm);
+
+        let res = client._get::<_, serde_json::Value>("api/overview").await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
+        println!("{}", pretty_json);
+    }
 }
