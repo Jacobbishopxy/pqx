@@ -3,10 +3,25 @@
 //! date: 2023/06/04 08:51:50 Sunday
 //! brief:
 
-use reqwest::{header::HeaderMap, ClientBuilder, Url};
-use serde::{de::DeserializeOwned, Serialize};
+use pqx_util::{read_json, read_yaml};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, AUTHORIZATION},
+    ClientBuilder, Url,
+};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::MqApiResult;
+
+// ================================================================================================
+// MqClientCfg
+// ================================================================================================
+
+#[derive(Debug, Deserialize)]
+pub struct MqClientCfg {
+    host: String,
+    port: usize,
+    auth: Option<String>,
+}
 
 // ================================================================================================
 // MqClient
@@ -36,6 +51,46 @@ impl MqClient {
             url: url.to_owned(),
             client: c,
         }
+    }
+
+    pub fn new_by_yaml(path: impl AsRef<str>) -> MqApiResult<Self> {
+        let cfg: MqClientCfg = read_yaml(path)?;
+
+        let c = match cfg.auth {
+            Some(ref auth) => {
+                let cb = ClientBuilder::new();
+                let mut hm = HeaderMap::new();
+                let v = HeaderValue::from_str(auth).map_err(|_| "invalid header value")?;
+                hm.insert(AUTHORIZATION, v);
+
+                cb.default_headers(hm)
+            }
+            None => ClientBuilder::default(),
+        }
+        .build()?;
+        let url = format!("{}:{}", cfg.host, cfg.port);
+
+        Ok(Self { url, client: c })
+    }
+
+    pub fn new_by_json(path: impl AsRef<str>) -> MqApiResult<Self> {
+        let cfg: MqClientCfg = read_json(path)?;
+
+        let c = match cfg.auth {
+            Some(ref auth) => {
+                let cb = ClientBuilder::new();
+                let mut hm = HeaderMap::new();
+                let v = HeaderValue::from_str(auth).map_err(|_| "invalid header value")?;
+                hm.insert(AUTHORIZATION, v);
+
+                cb.default_headers(hm)
+            }
+            None => ClientBuilder::default(),
+        }
+        .build()?;
+        let url = format!("{}:{}", cfg.host, cfg.port);
+
+        Ok(Self { url, client: c })
     }
 
     pub async fn get<P: AsRef<str>, R: DeserializeOwned>(&self, path: P) -> MqApiResult<R> {

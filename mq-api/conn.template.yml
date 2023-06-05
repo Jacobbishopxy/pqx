@@ -1,0 +1,7 @@
+# @author:	Jacob Xie
+# @date:	2023/06/05 18:01:25 Monday
+# @brief:
+
+host: localhost
+port: 15672
+auth: Basic YWRtaW46YWRtaW4=

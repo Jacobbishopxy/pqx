@@ -12,6 +12,9 @@ pub enum MqApiError {
     #[error(transparent)]
     Reqwest(reqwest::Error),
 
+    #[error(transparent)]
+    Util(pqx_util::PqxUtilError),
+
     #[error("{0}")]
     Custom(&'static str),
 }
@@ -25,6 +28,12 @@ impl MqApiError {
 impl From<reqwest::Error> for MqApiError {
     fn from(e: reqwest::Error) -> Self {
         Self::Reqwest(e)
+    }
+}
+
+impl From<pqx_util::PqxUtilError> for MqApiError {
+    fn from(e: pqx_util::PqxUtilError) -> Self {
+        Self::Util(e)
     }
 }
 
