@@ -20,6 +20,7 @@ use crate::MqApiResult;
 pub struct MqClientCfg {
     host: String,
     port: usize,
+    path: Option<String>,
     auth: Option<String>,
 }
 
@@ -69,6 +70,10 @@ impl MqClient {
         }
         .build()?;
         let url = format!("{}:{}", cfg.host, cfg.port);
+        let url = match cfg.path {
+            Some(p) => format!("{}/{}", url, p),
+            None => url,
+        };
 
         Ok(Self { url, client: c })
     }
@@ -89,6 +94,10 @@ impl MqClient {
         }
         .build()?;
         let url = format!("{}:{}", cfg.host, cfg.port);
+        let url = match cfg.path {
+            Some(p) => format!("{}/{}", url, p),
+            None => url,
+        };
 
         Ok(Self { url, client: c })
     }

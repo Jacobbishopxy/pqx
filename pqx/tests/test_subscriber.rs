@@ -22,6 +22,8 @@ const EXCHG: &str = "rbmq-rs-exchange";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
 
+const CONDA_ENV: &str = "py310";
+
 // ================================================================================================
 // helper
 // ================================================================================================
@@ -158,11 +160,7 @@ async fn mq_publish_success() {
 
     // 4. prepare message to be sent
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
-    let msg = CmdArg::CondaPython {
-        env: "py38".to_owned(),
-        dir: dir.to_str().unwrap().to_string(),
-        script: "print_csv_in_line.py".to_string(),
-    };
+    let msg = CmdArg::conda_python(CONDA_ENV, dir.to_string_lossy(), "print_csv_in_line.py");
 
     // 5. send to RabbitMq
     let res = publisher.publish(EXCHG, ROUT, msg).await;
