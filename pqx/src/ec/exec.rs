@@ -132,7 +132,7 @@ impl CmdExecutor {
 // ================================================================================================
 
 pub trait AsyncFn: Send + Sync {
-    fn call(&self, input: String) -> BoxFuture<'static, PqxResult<()>>;
+    fn call<'a>(&'a self, input: String) -> BoxFuture<'a, PqxResult<()>>;
 }
 
 impl<T, F> AsyncFn for T
@@ -141,7 +141,7 @@ where
     T: Send + Sync,
     F: Future<Output = PqxResult<()>> + Send + 'static,
 {
-    fn call(&self, input: String) -> BoxFuture<'static, PqxResult<()>> {
+    fn call<'a>(&'a self, input: String) -> BoxFuture<'a, PqxResult<()>> {
         Box::pin(self(input))
     }
 }
