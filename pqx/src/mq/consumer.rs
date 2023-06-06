@@ -48,29 +48,29 @@ impl AsyncConsumer for PqxDefaultConsumer {
 // ConsumerT
 // ================================================================================================
 
-pub trait ConsumerT<'a, M: DeserializeOwned> {
-    fn consume(&mut self, content: M) -> BoxFuture<'a, PqxResult<bool>>;
+pub trait ConsumerT<M: DeserializeOwned>: Clone {
+    fn consume<'a>(&'a mut self, content: M) -> BoxFuture<'a, PqxResult<bool>>;
 }
 
 // ================================================================================================
-// Consumer<T>
+// ConsumerWrapper<T>
 // A generic type holder for impl AsyncConsumer
 // ================================================================================================
 
 #[derive(Clone)]
-pub struct Consumer<'a, M, T>
+pub struct ConsumerWrapper<M, T>
 where
     M: Send + DeserializeOwned,
-    T: Send + ConsumerT<'a, M>,
+    T: Send + ConsumerT<M>,
 {
     consumer: T,
-    _msg_type: PhantomData<&'a M>,
+    _msg_type: PhantomData<M>,
 }
 
-impl<'a, M, T> Consumer<'a, M, T>
+impl<M, T> ConsumerWrapper<M, T>
 where
     M: Send + DeserializeOwned,
-    T: Send + ConsumerT<'a, M>,
+    T: Send + ConsumerT<M>,
 {
     pub fn new(consumer: T) -> Self {
         Self {
@@ -85,10 +85,10 @@ where
 }
 
 #[async_trait]
-impl<'a, M, T> AsyncConsumer for Consumer<'a, M, T>
+impl<M, T> AsyncConsumer for ConsumerWrapper<M, T>
 where
     M: Send + Sync + DeserializeOwned,
-    T: Send + Sync + ConsumerT<'a, M>,
+    T: Send + Sync + ConsumerT<M>,
 {
     async fn consume(
         &mut self,
@@ -119,7 +119,7 @@ where
             }
             Ok(false) => {
                 // requeue == true
-                let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
+                let args = BasicNackArguments::new(deliver.delivery_tag(), false, true);
                 let _ = channel.basic_nack(args).await;
             }
             Err(_) => {
