@@ -124,7 +124,7 @@ async fn mq_subscribe1_success() {
 
     // 1. consume
     let consumer = DevTopicConsumer;
-    let mut subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = BasicSubscriber::new(chan, consumer);
 
     let res = subscriber.consume(TOPIC_QUE1).await;
     assert!(res.is_ok());
@@ -145,7 +145,7 @@ async fn mq_subscribe2_success() {
 
     // 1. consume
     let consumer = DevTopicConsumer;
-    let mut subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = BasicSubscriber::new(chan, consumer);
 
     let res = subscriber.consume(TOPIC_QUE2).await;
     assert!(res.is_ok());

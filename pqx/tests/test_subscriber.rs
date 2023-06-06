@@ -125,7 +125,7 @@ async fn mq_subscribe_success() {
         .register_stderr_fn(Arc::new(a_print_stderr));
 
     // 5. new subscriber
-    let mut subscriber = Subscriber::new(client.channel().unwrap(), consumer);
+    let mut subscriber = BasicSubscriber::new(client.channel().unwrap(), consumer);
 
     // 6. consume
     let res = subscriber.consume(QUE).await;

@@ -161,7 +161,7 @@ async fn mq_subscribe_success() {
 
     // 4. consume
     let consumer = DevDlxConsumer;
-    let mut subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = BasicSubscriber::new(chan, consumer);
 
     let res = subscriber.consume(QUE).await;
     assert!(res.is_ok());

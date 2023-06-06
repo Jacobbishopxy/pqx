@@ -55,7 +55,7 @@ async fn mq_subscribe_success() {
     let consumer = PqxDefaultConsumer;
 
     // 5. new subscriber
-    let mut subscriber = Subscriber::new(chan, consumer);
+    let mut subscriber = BasicSubscriber::new(chan, consumer);
 
     // 6. consume
     let res = subscriber.consume(QUE).await;

@@ -3,15 +3,20 @@
 //! date: 2023/05/26 23:55:05 Friday
 //! brief:
 
+use std::marker::PhantomData;
+
 use amqprs::channel::*;
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{FieldName, FieldValue};
+use serde::de::DeserializeOwned;
 use tokio::sync::Notify;
 
 use crate::error::PqxResult;
 
+use super::{Consumer, ConsumerT};
+
 // ================================================================================================
-// Subscriber
+// BasicSubscriber
 //
 // methods:
 // 1. set_consume_args
@@ -23,25 +28,25 @@ use crate::error::PqxResult;
 // ================================================================================================
 
 #[derive(Clone)]
-pub struct Subscriber<'a, S>
+pub struct BasicSubscriber<'a, S>
 where
-    S: AsyncConsumer + Send + 'static,
+    S: AsyncConsumer + Send + Clone + 'static,
 {
     channel: &'a Channel,
     consume_args: Option<BasicConsumeArguments>,
-    consumer: Option<S>,
+    consumer: S,
     consumer_tag: Option<String>, // server generated tag, here we don't make it ourselves
 }
 
-impl<'a, S> Subscriber<'a, S>
+impl<'a, S> BasicSubscriber<'a, S>
 where
-    S: AsyncConsumer + Send + 'static,
+    S: AsyncConsumer + Send + Clone + 'static,
 {
     pub fn new(channel: &'a Channel, consumer: S) -> Self {
         Self {
             channel,
             consume_args: Some(BasicConsumeArguments::default()),
-            consumer: Some(consumer),
+            consumer,
             consumer_tag: None,
         }
     }
@@ -82,11 +87,7 @@ where
     }
 
     pub async fn consume(&mut self, que: &str) -> PqxResult<()> {
-        let consumer = if let Some(c) = self.consumer.take() {
-            c
-        } else {
-            return Err("consumer is empty".into());
-        };
+        let consumer = self.consumer.clone();
 
         let args = self
             .consume_args
@@ -123,5 +124,40 @@ where
         let guard = Notify::new();
 
         guard.notified().await;
+    }
+}
+
+// ================================================================================================
+// Subscriber
+// ================================================================================================
+
+// TODO
+
+#[derive(Clone)]
+pub struct Subscriber<'a, M, T>
+where
+    M: Send + Sync + DeserializeOwned,
+    T: Send + Sync + ConsumerT<'a, M>,
+{
+    channel: &'a Channel,
+    consume_args: Option<BasicConsumeArguments>,
+    consumer: Consumer<'a, M, T>,
+    consumer_tag: Option<String>,
+    _msg_type: PhantomData<M>,
+}
+
+impl<'a, M, T> Subscriber<'a, M, T>
+where
+    M: Send + Sync + DeserializeOwned,
+    T: Send + Sync + ConsumerT<'a, M>,
+{
+    pub fn new(channel: &'a Channel, consumer: Consumer<'a, M, T>) -> Self {
+        Self {
+            channel,
+            consume_args: Some(BasicConsumeArguments::default()),
+            consumer,
+            consumer_tag: None,
+            _msg_type: PhantomData,
+        }
     }
 }

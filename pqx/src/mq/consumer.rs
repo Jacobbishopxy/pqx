@@ -3,12 +3,17 @@
 //! date: 2023/05/28 11:06:07 Sunday
 //! brief:
 
-use amqprs::channel::{BasicAckArguments, Channel};
+use std::marker::PhantomData;
+
+use amqprs::channel::{BasicAckArguments, BasicNackArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
-use serde::Deserialize;
+use futures::future::BoxFuture;
+use serde::de::DeserializeOwned;
 use serde_json::Value;
+
+use crate::error::PqxResult;
 
 // ================================================================================================
 // PqxConsumer
@@ -40,12 +45,89 @@ impl AsyncConsumer for PqxDefaultConsumer {
 }
 
 // ================================================================================================
-// helper
+// ConsumerT
 // ================================================================================================
 
-#[async_trait]
-pub trait PqxConsumer<'a, D: Deserialize<'a>> {
-    async fn csm(&mut self, channel: &Channel, content: D);
+pub trait ConsumerT<'a, M: DeserializeOwned> {
+    fn consume(&mut self, content: M) -> BoxFuture<'a, PqxResult<bool>>;
 }
 
-// impl<T, D> PqxConsumer<D> for T {}
+// ================================================================================================
+// Consumer<T>
+// A generic type holder for impl AsyncConsumer
+// ================================================================================================
+
+#[derive(Clone)]
+pub struct Consumer<'a, M, T>
+where
+    M: Send + DeserializeOwned,
+    T: Send + ConsumerT<'a, M>,
+{
+    consumer: T,
+    _msg_type: PhantomData<&'a M>,
+}
+
+impl<'a, M, T> Consumer<'a, M, T>
+where
+    M: Send + DeserializeOwned,
+    T: Send + ConsumerT<'a, M>,
+{
+    pub fn new(consumer: T) -> Self {
+        Self {
+            consumer,
+            _msg_type: PhantomData,
+        }
+    }
+
+    pub fn consumer(&mut self) -> &mut T {
+        &mut self.consumer
+    }
+}
+
+#[async_trait]
+impl<'a, M, T> AsyncConsumer for Consumer<'a, M, T>
+where
+    M: Send + Sync + DeserializeOwned,
+    T: Send + Sync + ConsumerT<'a, M>,
+{
+    async fn consume(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        _basic_properties: BasicProperties,
+        content: Vec<u8>,
+    ) {
+        // deserialize from subscriber msg. simply discard message if cannot be deserialize
+        let msg = match serde_json::from_slice::<M>(&content) {
+            Ok(m) => m,
+            Err(_) => {
+                let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
+                // ignore error
+                let _ = channel.basic_nack(args).await;
+                return;
+            }
+        };
+
+        // future result
+        let fut_res = self.consumer().consume(msg).await;
+
+        // according to biz logic determine whether responds Ack/Requque/Discard
+        match fut_res {
+            Ok(true) => {
+                let args = BasicAckArguments::new(deliver.delivery_tag(), false);
+                let _ = channel.basic_ack(args).await;
+            }
+            Ok(false) => {
+                // requeue == true
+                let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
+                let _ = channel.basic_nack(args).await;
+            }
+            Err(_) => {
+                // requeue == false
+                let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
+                // ignore error
+                let _ = channel.basic_nack(args).await;
+            }
+        }
+    }
+}
