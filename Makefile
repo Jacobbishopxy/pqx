@@ -4,7 +4,7 @@
 include Makefile.env
 
 tree:
-	tree --dirsfirst --noreport -I "target|cache|Catalog.md|*.json|*.lock|*.toml|*.yml|*.csv|docker" | sed 's/^//' > Catalog.md
+	tree --dirsfirst --noreport -I "target|cache|log|Catalog.md|*.json|*.lock|*.toml|*.yml|*.csv|docker" | sed 's/^//' > Catalog.md
 
 # ================================================================================================
 # RabbitMQ
