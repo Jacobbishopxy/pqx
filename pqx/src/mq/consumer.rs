@@ -45,10 +45,10 @@ impl AsyncConsumer for PqxDefaultConsumer {
 }
 
 // ================================================================================================
-// ConsumerT
+// Consumer
 // ================================================================================================
 
-pub trait ConsumerT<M: DeserializeOwned>: Clone {
+pub trait Consumer<M: DeserializeOwned>: Clone {
     fn consume<'a>(&'a mut self, content: M) -> BoxFuture<'a, PqxResult<bool>>;
 }
 
@@ -61,7 +61,7 @@ pub trait ConsumerT<M: DeserializeOwned>: Clone {
 pub struct ConsumerWrapper<M, T>
 where
     M: Send + DeserializeOwned,
-    T: Send + ConsumerT<M>,
+    T: Send + Consumer<M>,
 {
     consumer: T,
     _msg_type: PhantomData<M>,
@@ -70,7 +70,7 @@ where
 impl<M, T> ConsumerWrapper<M, T>
 where
     M: Send + DeserializeOwned,
-    T: Send + ConsumerT<M>,
+    T: Send + Consumer<M>,
 {
     pub fn new(consumer: T) -> Self {
         Self {
@@ -88,7 +88,7 @@ where
 impl<M, T> AsyncConsumer for ConsumerWrapper<M, T>
 where
     M: Send + Sync + DeserializeOwned,
-    T: Send + Sync + ConsumerT<M>,
+    T: Send + Sync + Consumer<M>,
 {
     async fn consume(
         &mut self,

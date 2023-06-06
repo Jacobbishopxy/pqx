@@ -13,7 +13,7 @@ use tokio::sync::Notify;
 
 use crate::error::PqxResult;
 
-use super::{ConsumerT, ConsumerWrapper};
+use super::{Consumer, ConsumerWrapper};
 
 // ================================================================================================
 // BasicSubscriber
@@ -133,7 +133,7 @@ where
 pub struct Subscriber<'a, M, T>
 where
     M: Send + Sync + DeserializeOwned + 'static,
-    T: Send + Sync + ConsumerT<M> + 'static,
+    T: Send + Sync + Consumer<M> + 'static,
 {
     channel: &'a Channel,
     consume_args: Option<BasicConsumeArguments>,
@@ -145,7 +145,7 @@ where
 impl<'a, M, T> Subscriber<'a, M, T>
 where
     M: Send + Sync + DeserializeOwned + Clone + 'static,
-    T: Send + Sync + ConsumerT<M> + 'static,
+    T: Send + Sync + Consumer<M> + 'static,
 {
     pub fn new(channel: &'a Channel, consumer: T) -> Self {
         Self {
