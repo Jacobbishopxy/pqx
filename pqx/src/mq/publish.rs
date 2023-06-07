@@ -4,7 +4,7 @@
 //! brief:
 
 use amqprs::channel::{BasicPublishArguments, Channel};
-use amqprs::BasicProperties;
+use amqprs::{BasicProperties, FieldTable};
 use serde::Serialize;
 
 use crate::error::PqxResult;
@@ -29,6 +29,24 @@ impl<'a> Publisher<'a> {
 
     pub fn set_message_properties(&mut self, message_properties: BasicProperties) {
         self.message_prop = message_properties;
+    }
+
+    pub fn set_message_header(&mut self, headers: FieldTable) {
+        self.message_prop.with_headers(headers);
+    }
+
+    // message ttl
+    pub fn set_message_expiration(&mut self, seconds: usize) {
+        let ms = (seconds * 1000).to_string();
+        self.message_prop.with_expiration(&ms);
+    }
+
+    pub fn set_message_user_id(&mut self, user_id: &str) {
+        self.message_prop.with_user_id(user_id);
+    }
+
+    pub fn set_message_app_id(&mut self, app_id: &str) {
+        self.message_prop.with_app_id(app_id);
     }
 
     pub async fn publish<M>(&self, exchange: &str, rout: &str, msg: M) -> PqxResult<()>

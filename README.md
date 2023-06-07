@@ -82,4 +82,4 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 - [headers](./pqx/tests/test_headers.rs): header exchange
 
-- [custom consumer](./pqx/tests/test_consumer.rs): custom consumer with command execution and logging, a [Python script](./scripts/test_consumer_pub.py) for message publishing is also provided
+- [custom consumer](./pqx/tests/test_consumer.rs): a further test case from [subscriber](./pqx/tests/test_subscriber.rs), with custom consumer, command execution and logging. Moreover, a [Python script](./scripts/test_consumer_pub.py) for message publishing is also provided.
