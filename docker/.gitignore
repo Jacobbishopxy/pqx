@@ -1,0 +1,6 @@
+
+/facilities/mq/*
+!/facilities/mq/.gitkeep
+
+/facilities/pg/*
+!/facilities/pg/.gitkeep

@@ -7,43 +7,47 @@ tree:
 	tree --dirsfirst --noreport -I "target|cache|log|Catalog.md|*.json|*.lock|*.toml|*.yml|*.csv|docker" | sed 's/^//' > Catalog.md
 
 # ================================================================================================
-# RabbitMQ
+# facilities
 # ================================================================================================
 
-rbmq-start:
-	cd docker/rabbitmq && docker-compose up -d
+facilities-start:
+	cd docker/facilities && docker-compose up -d
 
-rbmq-remove:
-	cd docker/rabbitmq && docker-compose down
+facilities-remove:
+	cd docker/facilities && docker-compose down
 
-rbmq-adduser:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl add_user ${USER} ${PASS}; rabbitmqctl add_vhost ${VHOST}; rabbitmqctl set_user_tags ${USER} ${TAG}; rabbitmqctl set_permissions -p \"${VHOST}\" \"${USER}\" \".*\" \".*\" \".*\""
+# ////////////////////////////////////////////////////////////////////////////////////////////////
+
+mq-adduser:
+	docker exec ${CONTAINER_MQ} bash -c "rabbitmqctl add_user ${USER} ${PASS}; rabbitmqctl add_vhost ${VHOST}; rabbitmqctl set_user_tags ${USER} ${TAG}; rabbitmqctl set_permissions -p \"${VHOST}\" \"${USER}\" \".*\" \".*\" \".*\""
 
 # grant admin all the access/modify permission to ${VHOST}
-rbmq-supervisor:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl --vhost=${VHOST} set_permissions admin \".*\" \".*\" \".*\""
+mq-supervisor:
+	docker exec ${CONTAINER_MQ} rabbitmqctl --vhost=${VHOST} set_permissions admin ".*" ".*" ".*"
 
 # applies the DLX "dev-dlx" to all queues
-rbmq-setdlx:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl --vhost=${VHOST} set_policy DLX \".*\" '{\"dead-letter-exchange\":\"${DLX}\"}' --apply-to queues"
+mq-setdlx:
+	docker exec ${CONTAINER_MQ} rabbitmqctl --vhost=${VHOST} set_policy DLX ".*" '{"dead-letter-exchange":"${DLX}"}' --apply-to queues
 
-rbmq-setttl:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl --vhost=${VHOST} set_policy TTL \".*\" '{\"message-ttl\":${TTL}}' --apply-to queues"
+mq-setttl:
+	docker exec ${CONTAINER_MQ} rabbitmqctl --vhost=${VHOST} set_policy TTL ".*" '{"message-ttl":${TTL}}' --apply-to queues
 
-rbmq-purgeque:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl purge_queue --vhost=${VHOST} ${DEV_QUE}; rabbitmqctl purge_queue --vhost=${VHOST} ${DLX_QUE}"
+mq-purgeque:
+	docker exec ${CONTAINER_MQ} bash -c "rabbitmqctl purge_queue --vhost=${VHOST} ${DEV_QUE}; rabbitmqctl purge_queue --vhost=${VHOST} ${DLX_QUE}"
 
-rbmq-deleteque:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl delete_queue --vhost=${VHOST} ${DEV_QUE}; rabbitmqctl delete_queue --vhost=${VHOST} ${DLX_QUE}"
+mq-deleteque:
+	docker exec ${CONTAINER_MQ} bash -c "rabbitmqctl delete_queue --vhost=${VHOST} ${DEV_QUE}; rabbitmqctl delete_queue --vhost=${VHOST} ${DLX_QUE}"
 
-rbmq-listque:
-	docker exec ${CONTAINER} bash -c "rabbitmqctl list_queues --vhost=${VHOST}"
+mq-listque:
+	docker exec ${CONTAINER_MQ} rabbitmqctl list_queues --vhost=${VHOST}
 
-rbmq-into:
-	docker exec -it ${CONTAINER} bash
+mq-into:
+	docker exec -it ${CONTAINER_MQ} bash
 
-rbmq-logs:
-	cd docker/rabbitmq && docker-compose logs -f --tail=10
+# ////////////////////////////////////////////////////////////////////////////////////////////////
+
+pg-into:
+	docker exec -it ${CONTAINER_PG} bash
 
 # ================================================================================================
 # pqx

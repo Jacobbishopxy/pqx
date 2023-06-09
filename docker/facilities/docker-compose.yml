@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  mq-dev:
+    restart: always
+    container_name: mq-dev
+    image: rabbitmq:3.11-management
+    environment:
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_VHOST: 'vhost'
+    ports:
+      - "127.0.0.1:5677:5672"
+      - "127.0.0.1:15677:15672"
+    volumes:
+      - ./mq/:/var/lib/rabbitmq/:z
+      - /etc/localtime:/etc/localtime:ro
+
+  pg-dev:
+    restart: always
+    container_name: pg-dev
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: admin
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "127.0.0.1:5437:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./pg:/var/lib/postgresql/data:z
+      - /etc/localtime:/etc/localtime:ro

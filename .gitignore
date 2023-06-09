@@ -10,8 +10,6 @@ target/
 *.pdb
 .vscode
 
-/docker/rabbitmq/data/*
-!/docker/rabbitmq/data/.gitkeep
 Catalog.md
 pqx/conn.yml
 mq-api/conn.yml
