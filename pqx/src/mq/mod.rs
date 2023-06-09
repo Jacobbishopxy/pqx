@@ -107,6 +107,16 @@ macro_rules! impl_set_consumer_timeout {
     };
 }
 
+macro_rules! impl_recover {
+    () => {
+        pub async fn recover(&self, requeue: bool) -> crate::error::PqxResult<()> {
+            self.channel.basic_recover(requeue).await?;
+
+            Ok(())
+        }
+    };
+}
+
 macro_rules! impl_consume {
     () => {
         pub async fn consume(&mut self, que: &str) -> crate::error::PqxResult<()> {
@@ -162,6 +172,7 @@ macro_rules! impl_block {
 pub(crate) use impl_block;
 pub(crate) use impl_cancel_consume;
 pub(crate) use impl_consume;
+pub(crate) use impl_recover;
 pub(crate) use impl_set_consume_args;
 pub(crate) use impl_set_consumer_prefetch;
 pub(crate) use impl_set_consumer_priorities;

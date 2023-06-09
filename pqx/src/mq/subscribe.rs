@@ -48,6 +48,7 @@ where
     impl_set_consumer_prefetch!();
     impl_set_consumer_priorities!();
     impl_set_consumer_timeout!();
+    impl_recover!();
     impl_consume!();
     impl_cancel_consume!();
     impl_block!();
@@ -86,6 +87,7 @@ where
     impl_set_consumer_prefetch!();
     impl_set_consumer_priorities!();
     impl_set_consumer_timeout!();
+    impl_recover!();
     impl_consume!();
     impl_cancel_consume!();
     impl_block!();

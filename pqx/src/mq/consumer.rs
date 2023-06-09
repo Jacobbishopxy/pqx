@@ -50,6 +50,10 @@ impl AsyncConsumer for PqxDefaultConsumer {
 
 pub trait Consumer<M: DeserializeOwned>: Clone {
     fn consume<'a>(&'a mut self, content: M) -> BoxFuture<'a, PqxResult<bool>>;
+
+    // default impl
+    #[allow(unused_variables)]
+    fn handle_props(&self, props: BasicProperties) {}
 }
 
 // ================================================================================================
@@ -94,7 +98,7 @@ where
         &mut self,
         channel: &Channel,
         deliver: Deliver,
-        _basic_properties: BasicProperties,
+        basic_properties: BasicProperties,
         content: Vec<u8>,
     ) {
         // deserialize from subscriber msg. simply discard message if cannot be deserialize
@@ -108,6 +112,8 @@ where
             }
         };
 
+        // handle props
+        self.consumer().handle_props(basic_properties);
         // future result
         let fut_res = self.consumer().consume(msg).await;
 
