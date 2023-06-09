@@ -1,0 +1,13 @@
+[package]
+name = "pqx-app"
+authors = ["JacobX <jacobbishopxy@gmail.com>"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pqx = { path = "../pqx" }
+
+anyhow = "1"
+tracing = "0"
+tracing-appender = "0"
+tracing-subscriber = "0"

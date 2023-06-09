@@ -9,3 +9,4 @@ pub mod error;
 pub mod mq;
 
 pub use amqprs::*;
+pub use pqx_util::*;

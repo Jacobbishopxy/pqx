@@ -1,7 +1,15 @@
 //! file: subscribe.rs
 //! author: Jacob Xie
 //! date: 2023/05/26 23:55:05 Friday
-//! brief:
+//!
+//! Subscriber methods:
+//! 1. set_consume_args
+//! 2. set_consumer_prefetch
+//! 3. set_consumer_priorities
+//! 4. set_consumer_timeout
+//! 5. consume
+//! 6. cancel_consume
+//! 7. block
 
 use amqprs::channel::*;
 use amqprs::consumer::AsyncConsumer;
@@ -11,14 +19,6 @@ use super::*;
 
 // ================================================================================================
 // BasicSubscriber
-//
-// methods:
-// 1. set_consume_args
-// 2. set_consumer_prefetch
-// 3. set_consumer_priorities
-// 4. consume
-// 5. cancel_consume
-// 6. block
 // ================================================================================================
 
 pub struct BasicSubscriber<'a, S>
