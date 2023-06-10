@@ -172,6 +172,22 @@ impl MqClient {
         Ok(())
     }
 
+    pub async fn declare_exchange_with_args(
+        &self,
+        name: &str,
+        exchange_type: ExchangeType,
+        args: FieldTable,
+    ) -> PqxResult<()> {
+        let chan = get_channel!(self)?;
+        let exchange_args = ExchangeDeclareArguments::new(name, &exchange_type.to_string())
+            .arguments(args)
+            .finish();
+
+        chan.exchange_declare(exchange_args).await?;
+
+        Ok(())
+    }
+
     pub async fn bind_exchange(
         &self,
         source_exchange: &str,
