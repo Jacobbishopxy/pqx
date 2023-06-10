@@ -47,6 +47,7 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       ├── test_dlx.rs
 │       ├── test_headers.rs
 │       ├── test_mq.rs
+│       ├── test_delay_retry.rs
 │       ├── test_subscriber.rs
 │       └── test_topics.rs
 ├── pqx-app
@@ -94,3 +95,7 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 - [headers](./pqx/tests/test_headers.rs): header exchange
 
 - [custom consumer](./pqx/tests/test_consumer.rs): a further test case from [subscriber](./pqx/tests/test_subscriber.rs), with custom consumer, command execution and logging. Moreover, a [Python script](./scripts/test_consumer_pub.py) for message publishing is also provided.
+
+- [callback registration](./pqx/tests/test_callback.rs): connection & channel callback registration
+
+- [delay retry](./pqx/tests/test_retry.rs): based on plugin [delayed_message_exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange), implementation of message retry

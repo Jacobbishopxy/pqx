@@ -167,5 +167,5 @@ async fn mq_publish_success() {
     assert!(res.is_ok());
 
     // 6. block a second to wait publish done
-    publisher.block(1).await
+    publisher.block(1).await;
 }

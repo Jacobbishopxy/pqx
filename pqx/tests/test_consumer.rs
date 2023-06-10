@@ -15,8 +15,7 @@ use pqx::ec::CmdAsyncExecutor;
 use pqx::error::PqxResult;
 use pqx::mq::*;
 use serde::{Deserialize, Serialize};
-use tracing::info;
-use tracing::instrument;
+use tracing::{info, instrument};
 
 // ================================================================================================
 // const
