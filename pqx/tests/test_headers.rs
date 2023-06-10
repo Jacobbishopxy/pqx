@@ -102,7 +102,7 @@ async fn declare_exchange_and_queues() {
     // 2. declare and bind queues
     // declare que1
     let args = QueueDeclareArguments::new(HEADER_QUE1);
-    let res = client.declare_queue(args).await;
+    let res = client.declare_queue_by_args(args).await;
     assert!(res.is_ok());
     // bind que1, with "x-match" and other pattern args
     let mut args = QueueBindArguments::new(HEADER_QUE1, EXCHG, "");
@@ -120,12 +120,12 @@ async fn declare_exchange_and_queues() {
         FieldValue::from(String::from("c1")),
     );
     args.arguments(ft);
-    let res = client.bind_queue(args).await;
+    let res = client.bind_queue_by_args(args).await;
     assert!(res.is_ok());
 
     // declare que2
     let args = QueueDeclareArguments::new(HEADER_QUE2);
-    let res = client.declare_queue(args).await;
+    let res = client.declare_queue_by_args(args).await;
     assert!(res.is_ok());
     // bind que2, with "x-match" and other pattern args
     let mut args = QueueBindArguments::new(HEADER_QUE2, EXCHG, "");
@@ -143,7 +143,7 @@ async fn declare_exchange_and_queues() {
         FieldValue::from(String::from("c1")),
     );
     args.arguments(ft);
-    let res = client.bind_queue(args).await;
+    let res = client.bind_queue_by_args(args).await;
     assert!(res.is_ok());
 }
 

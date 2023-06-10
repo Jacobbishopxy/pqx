@@ -233,7 +233,16 @@ impl MqClient {
         Ok(())
     }
 
-    pub async fn declare_queue(&self, args: QueueDeclareArguments) -> PqxResult<()> {
+    pub async fn declare_queue(&self, que: &str) -> PqxResult<()> {
+        let chan = get_channel!(self)?;
+
+        chan.queue_declare(QueueDeclareArguments::durable_client_named(que))
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn declare_queue_by_args(&self, args: QueueDeclareArguments) -> PqxResult<()> {
         let chan = get_channel!(self)?;
 
         chan.queue_declare(args).await?;
@@ -285,12 +294,12 @@ impl MqClient {
         }
         args.arguments(ft);
 
-        self.declare_queue(args).await?;
+        self.declare_queue_by_args(args).await?;
 
         Ok(())
     }
 
-    pub async fn bind_queue(&self, args: QueueBindArguments) -> PqxResult<()> {
+    pub async fn bind_queue_by_args(&self, args: QueueBindArguments) -> PqxResult<()> {
         let chan = get_channel!(self)?;
 
         chan.queue_bind(args).await?;
@@ -298,7 +307,7 @@ impl MqClient {
         Ok(())
     }
 
-    pub async fn bind_simple_queue(&self, exchange: &str, rout: &str, que: &str) -> PqxResult<()> {
+    pub async fn bind_queue(&self, exchange: &str, rout: &str, que: &str) -> PqxResult<()> {
         let chan = get_channel!(self)?;
 
         chan.queue_bind(QueueBindArguments::new(que, exchange, rout))
