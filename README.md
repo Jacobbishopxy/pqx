@@ -71,7 +71,9 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 ## Quick startup
 
-1. Make sure RabbitMq and PostgreSQL has been started, simply by executing `make facilities-start`. Check [docker-compose](./docker/facilities/docker-compose.yml) for composing detail.
+1. Build image for RabbitMQ: `make facilities-build`
+
+1. Make sure RabbitMQ and PostgreSQL has been started, simply by executing `make facilities-start`. Check [docker-compose](./docker/facilities/docker-compose.yml) for composing detail.
 
 1. Add RabbitMQ user: `make mq-adduser`
 
