@@ -15,7 +15,7 @@ use serde_json::Value;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
 
-use crate::error::PqxResult;
+use crate::error::{PqxError, PqxResult};
 
 // ================================================================================================
 // PqxConsumer
@@ -77,7 +77,8 @@ pub trait Consumer<M: DeserializeOwned>: Clone {
         Ok(())
     }
 
-    async fn discard_callback(&mut self) -> PqxResult<()> {
+    #[allow(unused_variables)]
+    async fn discard_callback(&mut self, error: PqxError) -> PqxResult<()> {
         Ok(())
     }
 }
@@ -173,9 +174,9 @@ where
         let _ = self.nack(channel, deliver, true).await;
     }
 
-    async fn handle_discard(&mut self, channel: &Channel, deliver: Deliver) {
+    async fn handle_discard(&mut self, channel: &Channel, deliver: Deliver, error: PqxError) {
         // if callback failed, signal consume to false
-        if let Err(_) = self.consumer().discard_callback().await {
+        if let Err(_) = self.consumer().discard_callback(error).await {
             self.signal_consume(false).await;
         };
         let _ = self.nack(channel, deliver, false).await;
@@ -198,8 +199,8 @@ where
         // deserialize from subscriber msg. simply discard message if cannot be deserialize
         let msg = match serde_json::from_slice::<M>(&content) {
             Ok(m) => m,
-            Err(_) => {
-                self.handle_discard(channel, deliver).await;
+            Err(e) => {
+                self.handle_discard(channel, deliver, e.into()).await;
                 return;
             }
         };
@@ -209,11 +210,11 @@ where
         // future result
         let fut_res = self.consumer().consume(&msg).await;
 
-        // according to biz logic determine whether responds Ack/Requque/Discard
+        // according to biz logic determine whether responds Ack/Requeue/Discard
         match fut_res {
             Ok(true) => self.handle_success(channel, deliver, &msg).await,
             Ok(false) => self.handle_requeue(channel, deliver, &msg).await,
-            Err(_) => self.handle_discard(channel, deliver).await,
+            Err(e) => self.handle_discard(channel, deliver, e).await,
         };
     }
 }

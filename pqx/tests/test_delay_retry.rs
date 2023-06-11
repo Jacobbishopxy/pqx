@@ -186,7 +186,7 @@ impl AsyncConsumer for CustomConsumer {
                 }
             }
             Err(_) => {
-                // if execution failed, regard fault message, then discard it
+                // if execution failed, regard fault message, then discard it (or DLX)
                 let args = BasicNackArguments::new(deliver.delivery_tag(), false, false);
                 let _ = channel.basic_nack(args).await;
             }

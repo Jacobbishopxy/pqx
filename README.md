@@ -44,10 +44,10 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       ├── test_callback.rs
 │       ├── test_cmd.rs
 │       ├── test_consumer.rs
+│       ├── test_delay_retry.rs
 │       ├── test_dlx.rs
 │       ├── test_headers.rs
 │       ├── test_mq.rs
-│       ├── test_delay_retry.rs
 │       ├── test_subscriber.rs
 │       └── test_topics.rs
 ├── pqx-app
@@ -63,7 +63,9 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       └── lib.rs
 ├── scripts
 │   ├── print_csv_in_line.py
-│   └── test_consumer_pub.py
+│   ├── success.py
+│   ├── test_consumer_pub.py
+│   └── throw_error.py
 ├── LICENSE
 ├── Makefile
 ├── Makefile.env
