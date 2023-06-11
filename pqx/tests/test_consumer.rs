@@ -7,8 +7,8 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use amqprs::channel::ExchangeType;
+use async_trait::async_trait;
 use chrono::{DateTime, Local};
-use futures::future::BoxFuture;
 use pqx::ec::util::*;
 use pqx::ec::CmdArg;
 use pqx::ec::CmdAsyncExecutor;
@@ -80,17 +80,13 @@ impl CustomConsumer {
     }
 }
 
+#[async_trait]
 impl Consumer<DevMsg> for CustomConsumer {
     #[instrument]
-    fn consume<'a>(&'a mut self, content: DevMsg) -> BoxFuture<'a, PqxResult<bool>> {
-        let fut = async move {
-            info!("received dev msg: {:?}", content);
-            let es = self.executor.exec(1, content.cmd).await?;
+    async fn consume(&mut self, content: DevMsg) -> PqxResult<bool> {
+        let es = self.executor.exec(1, content.cmd).await?;
 
-            Ok(es.success())
-        };
-
-        Box::pin(fut)
+        Ok(es.success())
     }
 }
 

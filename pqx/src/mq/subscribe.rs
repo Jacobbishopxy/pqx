@@ -58,6 +58,11 @@ where
 // Subscriber
 // ================================================================================================
 
+// TODO:
+// `consumer` now has a `should_cancel_consumer` field, this should be considered as an optional
+// method in the `block` method:
+// if `should_cancel_consumer` is true, then call `cancel_consume` and exit program
+
 pub struct Subscriber<'a, M, T>
 where
     M: Send + Sync + DeserializeOwned + 'static,
