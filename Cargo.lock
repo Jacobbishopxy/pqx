@@ -748,6 +748,7 @@ name = "pqx-app"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "pqx",
  "tracing",
  "tracing-appender",

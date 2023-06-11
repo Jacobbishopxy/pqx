@@ -12,6 +12,7 @@ use chrono::{DateTime, Local};
 use pqx::ec::util::*;
 use pqx::ec::CmdArg;
 use pqx::ec::CmdAsyncExecutor;
+use pqx::error::PqxError;
 use pqx::error::PqxResult;
 use pqx::mq::*;
 use serde::{Deserialize, Serialize};
@@ -83,10 +84,16 @@ impl CustomConsumer {
 #[async_trait]
 impl Consumer<DevMsg> for CustomConsumer {
     #[instrument]
-    async fn consume(&mut self, content: DevMsg) -> PqxResult<bool> {
-        let es = self.executor.exec(1, content.cmd).await?;
+    async fn consume(&mut self, content: &DevMsg) -> PqxResult<bool> {
+        let es = self.executor.exec(1, content.cmd.clone()).await?;
 
         Ok(es.success())
+    }
+
+    // We do it on purpose to see program exits elegantly (check `soft_fail_block`)
+    async fn success_callback(&mut self, _content: &DevMsg) -> PqxResult<()> {
+        println!(">>> fail on purpose!");
+        Err(PqxError::custom("fail on purpose!"))
     }
 }
 
@@ -157,7 +164,7 @@ async fn mq_subscriber_success() {
     println!("Start listening...");
 
     // 7. block
-    subscriber.block().await;
+    subscriber.soft_fail_block().await;
 }
 
 #[tokio::test]
@@ -179,7 +186,8 @@ async fn mq_publish_success() {
 
     // 4. message
     let dir = join_dir(parent_dir(current_dir().unwrap()).unwrap(), "scripts").unwrap();
-    let cmd = CmdArg::conda_python(CONDA_ENV, dir.to_string_lossy(), "print_csv_in_line.py");
+    // let cmd = CmdArg::conda_python(CONDA_ENV, dir.to_string_lossy(), "print_csv_in_line.py");
+    let cmd = CmdArg::conda_python(CONDA_ENV, dir.to_string_lossy(), "success.py");
     let msg = DevMsg::new(cmd);
 
     // 5. send

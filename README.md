@@ -82,7 +82,7 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 
 ## Test cases
 
-- [cmd](./pqx/tests/test_cmd.rs): `cmd` module, commands composation and execution
+- [cmd](./pqx/tests/test_cmd.rs): `cmd` module, commands composition and execution
 
 - [mq](./pqx/tests/test_mq.rs): `mq` module, basic pub/sub
 

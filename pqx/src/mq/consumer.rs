@@ -4,6 +4,7 @@
 //! brief:
 
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use amqprs::channel::{BasicAckArguments, BasicNackArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
@@ -11,6 +12,8 @@ use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
+use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::Mutex;
 
 use crate::error::PqxResult;
 
@@ -53,7 +56,7 @@ pub trait Consumer<M: DeserializeOwned>: Clone {
     // Ok(true) => handle_success
     // Ok(false) => handle_requeue
     // Err(_) => handle_discard
-    async fn consume(&mut self, content: M) -> PqxResult<bool>;
+    async fn consume(&mut self, content: &M) -> PqxResult<bool>;
 
     // ================================================================================================
     // default implementation
@@ -61,17 +64,19 @@ pub trait Consumer<M: DeserializeOwned>: Clone {
     // the following methods can be overridden
     // ================================================================================================
 
-    // TODO: message as input param
-
     #[allow(unused_variables)]
     fn handle_props(&self, props: BasicProperties) {}
 
-    async fn success_callback(&mut self) -> PqxResult<()> {
+    #[allow(unused_variables)]
+    async fn success_callback(&mut self, content: &M) -> PqxResult<()> {
         Ok(())
     }
-    async fn requeue_callback(&mut self) -> PqxResult<()> {
+
+    #[allow(unused_variables)]
+    async fn requeue_callback(&mut self, content: &M) -> PqxResult<()> {
         Ok(())
     }
+
     async fn discard_callback(&mut self) -> PqxResult<()> {
         Ok(())
     }
@@ -81,17 +86,23 @@ pub trait Consumer<M: DeserializeOwned>: Clone {
 // ConsumerWrapper<T>
 // A generic type holder for impl AsyncConsumer
 //
-// User doesn't need this struct, since it is a holder of user biz logic
+// User doesn't need this struct, since it is a holder of user biz logic.
+//
+// About `consume_signal_sender` & `consume_signal_receiver`:
+// Since we can call `consume` multiple times (accepting messages from different queue),
+// and each time's calling is actually cloning a consumer `T`, then multiple senders of a channel
+// is required, which indicates one-fail-all-fail.
 // ================================================================================================
 
 #[derive(Clone)]
 pub(crate) struct ConsumerWrapper<M, T>
 where
     M: Send + DeserializeOwned,
-    T: Send + Consumer<M>,
+    T: Send + Consumer<M> + Clone,
 {
     consumer: T,
-    should_cancel_consumer: bool,
+    consume_signal_sender: Sender<bool>,
+    consume_signal_receiver: Arc<Mutex<Receiver<bool>>>,
     _msg_type: PhantomData<M>,
 }
 
@@ -101,15 +112,26 @@ where
     T: Send + Consumer<M>,
 {
     pub fn new(consumer: T) -> Self {
+        let (tx, rx) = tokio::sync::mpsc::channel(1);
+
         Self {
             consumer,
-            should_cancel_consumer: false,
+            consume_signal_sender: tx,
+            consume_signal_receiver: Arc::new(Mutex::new(rx)),
             _msg_type: PhantomData,
         }
     }
 
     pub fn consumer(&mut self) -> &mut T {
         &mut self.consumer
+    }
+
+    pub async fn signal_consume(&self, signal: bool) {
+        let _ = self.consume_signal_sender.send(signal).await;
+    }
+
+    pub fn consume_signal_receiver(&self) -> Arc<Mutex<Receiver<bool>>> {
+        self.consume_signal_receiver.clone()
     }
 
     // ================================================================================================
@@ -135,26 +157,26 @@ where
         Ok(())
     }
 
-    async fn handle_success(&mut self, channel: &Channel, deliver: Deliver) {
-        // if callback failed, set `cancel_consumer` to true
-        if let Err(_) = self.consumer().success_callback().await {
-            self.should_cancel_consumer = true;
+    async fn handle_success(&mut self, channel: &Channel, deliver: Deliver, message: &M) {
+        // if callback failed, signal consume to false
+        if let Err(_) = self.consumer().success_callback(message).await {
+            self.signal_consume(false).await;
         };
         let _ = self.ack(channel, deliver).await;
     }
 
-    async fn handle_requeue(&mut self, channel: &Channel, deliver: Deliver) {
-        // if callback failed, set `cancel_consumer` to true
-        if let Err(_) = self.consumer().requeue_callback().await {
-            self.should_cancel_consumer = true;
+    async fn handle_requeue(&mut self, channel: &Channel, deliver: Deliver, message: &M) {
+        // if callback failed, signal consume to false
+        if let Err(_) = self.consumer().requeue_callback(message).await {
+            self.signal_consume(false).await;
         };
         let _ = self.nack(channel, deliver, true).await;
     }
 
     async fn handle_discard(&mut self, channel: &Channel, deliver: Deliver) {
-        // if callback failed, set `cancel_consumer` to true
+        // if callback failed, signal consume to false
         if let Err(_) = self.consumer().discard_callback().await {
-            self.should_cancel_consumer = true;
+            self.signal_consume(false).await;
         };
         let _ = self.nack(channel, deliver, false).await;
     }
@@ -185,12 +207,12 @@ where
         // handle props
         self.consumer().handle_props(basic_properties);
         // future result
-        let fut_res = self.consumer().consume(msg).await;
+        let fut_res = self.consumer().consume(&msg).await;
 
         // according to biz logic determine whether responds Ack/Requque/Discard
         match fut_res {
-            Ok(true) => self.handle_success(channel, deliver).await,
-            Ok(false) => self.handle_requeue(channel, deliver).await,
+            Ok(true) => self.handle_success(channel, deliver, &msg).await,
+            Ok(false) => self.handle_requeue(channel, deliver, &msg).await,
             Err(_) => self.handle_discard(channel, deliver).await,
         };
     }
