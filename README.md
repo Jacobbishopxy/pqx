@@ -25,31 +25,21 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       ├── lib.rs
 │       └── query.rs
 ├── pqx
-│   ├── src
-│   │   ├── ec
-│   │   │   ├── cmd.rs
-│   │   │   ├── exec.rs
-│   │   │   ├── mod.rs
-│   │   │   └── util.rs
-│   │   ├── mq
-│   │   │   ├── client.rs
-│   │   │   ├── consumer.rs
-│   │   │   ├── mod.rs
-│   │   │   ├── publish.rs
-│   │   │   └── subscribe.rs
-│   │   ├── cfg.rs
-│   │   ├── error.rs
-│   │   └── lib.rs
-│   └── tests
-│       ├── test_callback.rs
-│       ├── test_cmd.rs
-│       ├── test_consumer.rs
-│       ├── test_delay_retry.rs
-│       ├── test_dlx.rs
-│       ├── test_headers.rs
-│       ├── test_mq.rs
-│       ├── test_subscriber.rs
-│       └── test_topics.rs
+│   └── src
+│       ├── ec
+│       │   ├── cmd.rs
+│       │   ├── exec.rs
+│       │   ├── mod.rs
+│       │   └── util.rs
+│       ├── mq
+│       │   ├── client.rs
+│       │   ├── consumer.rs
+│       │   ├── mod.rs
+│       │   ├── publish.rs
+│       │   └── subscribe.rs
+│       ├── cfg.rs
+│       ├── error.rs
+│       └── lib.rs
 ├── pqx-app
 │   └── src
 │       ├── bin
@@ -61,11 +51,6 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       ├── cfg.rs
 │       ├── error.rs
 │       └── lib.rs
-├── scripts
-│   ├── print_csv_in_line.py
-│   ├── success.py
-│   ├── test_consumer_pub.py
-│   └── throw_error.py
 ├── LICENSE
 ├── Makefile
 ├── Makefile.env
