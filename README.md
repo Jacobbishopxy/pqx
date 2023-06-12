@@ -45,16 +45,14 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       ├── bin
 │       │   ├── initiator.rs
 │       │   └── subscriber.rs
+│       ├── adt.rs
 │       └── lib.rs
 ├── pqx-util
 │   └── src
 │       ├── cfg.rs
 │       ├── error.rs
 │       └── lib.rs
-├── LICENSE
-├── Makefile
-├── Makefile.env
-└── README.md
+└── LICENSE
 ```
 
 ![app](./app.svg)

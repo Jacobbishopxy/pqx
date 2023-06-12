@@ -8,5 +8,5 @@ pub mod ec;
 pub mod error;
 pub mod mq;
 
-pub use amqprs::*;
-pub use pqx_util::*;
+pub use amqprs;
+pub use pqx_util;
