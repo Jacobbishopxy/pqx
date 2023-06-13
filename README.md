@@ -2,11 +2,11 @@
 
 PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system, and serves as a subscriber for receiving messages and execute related commands.
 
-## Structure
+## Project Structure
 
 - `pqx-util`: util functions
 
-- `pqx`
+- `pqx`: library
 
   - `ec`: commands and executors
 
@@ -46,14 +46,19 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 │       │   ├── initiator.rs
 │       │   └── subscriber.rs
 │       ├── adt.rs
-│       └── lib.rs
+│       ├── execution.rs
+│       ├── lib.rs
+│       └── persistence.rs
 ├── pqx-util
 │   └── src
 │       ├── cfg.rs
 │       ├── error.rs
-│       └── lib.rs
+│       ├── lib.rs
+│       └── logging.rs
 └── LICENSE
 ```
+
+## Pqx Application
 
 ![app](./app.svg)
 

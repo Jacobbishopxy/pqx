@@ -17,8 +17,26 @@ pub struct Command {
     consumer_ids: Vec<String>,
     retry: Option<usize>,
     poke: Option<usize>,
-    timeout: Option<usize>,
+    waiting_timeout: Option<usize>,
+    consuming_timeout: Option<usize>,
     cmd: CmdArg,
+}
+
+impl Command {
+    pub fn new(cmd: CmdArg) -> Self {
+        Self {
+            consumer_ids: vec![],
+            retry: None,
+            poke: None,
+            waiting_timeout: None,
+            consuming_timeout: None,
+            cmd,
+        }
+    }
+
+    pub fn cmd(&self) -> &CmdArg {
+        &self.cmd
+    }
 }
 
 impl<'a> TryFrom<&'a Command> for FieldTable {
@@ -41,9 +59,16 @@ impl<'a> TryFrom<&'a Command> for FieldTable {
             );
         }
 
-        if let Some(t) = cmd.timeout {
+        if let Some(t) = cmd.waiting_timeout {
             ft.insert(
                 FieldName::try_from("x-message-ttl".to_string())?,
+                FieldValue::l(i64::try_from(t)?),
+            );
+        }
+
+        if let Some(t) = cmd.consuming_timeout {
+            ft.insert(
+                FieldName::try_from("x-consume-tl".to_string())?,
                 FieldValue::l(i64::try_from(t)?),
             );
         }
