@@ -4,5 +4,6 @@
 //! brief:
 
 pub mod adt;
+pub mod entities;
 pub mod execution;
 pub mod persistence;
