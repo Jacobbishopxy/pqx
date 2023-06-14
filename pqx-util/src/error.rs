@@ -13,10 +13,13 @@ pub enum PqxUtilError {
     StdIO(std::io::Error),
 
     #[error(transparent)]
-    Serde(serde_json::Error),
+    SerdeJson(serde_json::Error),
 
     #[error(transparent)]
     SerdeYaml(serde_yaml::Error),
+
+    #[error(transparent)]
+    SeaOrm(sea_orm::error::DbErr),
 
     #[error("{0}")]
     Custom(&'static str),
@@ -30,13 +33,19 @@ impl From<std::io::Error> for PqxUtilError {
 
 impl From<serde_json::Error> for PqxUtilError {
     fn from(e: serde_json::Error) -> Self {
-        PqxUtilError::Serde(e)
+        PqxUtilError::SerdeJson(e)
     }
 }
 
 impl From<serde_yaml::Error> for PqxUtilError {
     fn from(e: serde_yaml::Error) -> Self {
         PqxUtilError::SerdeYaml(e)
+    }
+}
+
+impl From<sea_orm::error::DbErr> for PqxUtilError {
+    fn from(e: sea_orm::error::DbErr) -> Self {
+        PqxUtilError::SeaOrm(e)
     }
 }
 

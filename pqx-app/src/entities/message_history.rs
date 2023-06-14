@@ -5,6 +5,10 @@
 
 use sea_orm::entity::prelude::*;
 
+// ================================================================================================
+// Model: message_history
+// ================================================================================================
+
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "message_history")]
 pub struct Model {
@@ -14,12 +18,12 @@ pub struct Model {
     #[sea_orm(nullable)]
     pub retry: Option<i16>,
     #[sea_orm(nullable)]
-    pub poke: Option<i64>,
+    pub poke: Option<i32>,
     #[sea_orm(nullable)]
     pub waiting_timeout: Option<i64>,
     #[sea_orm(nullable)]
     pub consuming_timeout: Option<i64>,
-    // TODO: CmdArg
+    pub cmd: Json,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]

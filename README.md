@@ -56,6 +56,7 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 ├── pqx-util
 │   └── src
 │       ├── cfg.rs
+│       ├── db.rs
 │       ├── error.rs
 │       ├── lib.rs
 │       └── logging.rs

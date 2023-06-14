@@ -4,10 +4,12 @@
 //! brief:
 
 pub mod cfg;
+pub mod db;
 pub mod error;
 pub mod logging;
 
 pub use cfg::*;
+pub use db::*;
 pub use error::*;
 pub use logging::*;
 
