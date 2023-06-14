@@ -3,6 +3,7 @@
 //! date: 2023/05/22 21:26:43 Monday
 //! brief:
 
+use pqx_util::impl_from_error;
 use thiserror::Error;
 
 pub type PqxResult<T> = Result<T, PqxError>;
@@ -11,6 +12,9 @@ pub type PqxResult<T> = Result<T, PqxError>;
 pub enum PqxError {
     #[error(transparent)]
     StdIO(std::io::Error),
+
+    #[error(transparent)]
+    NumTryFrom(std::num::TryFromIntError),
 
     #[error(transparent)]
     RbMQ(amqprs::error::Error),
@@ -31,32 +35,14 @@ impl PqxError {
     }
 }
 
-impl From<std::io::Error> for PqxError {
-    fn from(e: std::io::Error) -> Self {
-        PqxError::StdIO(e)
-    }
-}
+impl_from_error!(std::io::Error, PqxError, StdIO);
+impl_from_error!(std::num::TryFromIntError, PqxError, NumTryFrom);
+impl_from_error!(amqprs::error::Error, PqxError, RbMQ);
+impl_from_error!(serde_json::Error, PqxError, Serde);
+impl_from_error!(pqx_util::PqxUtilError, PqxError, Util);
 
 impl From<&'static str> for PqxError {
     fn from(e: &'static str) -> Self {
         PqxError::Custom(e)
-    }
-}
-
-impl From<amqprs::error::Error> for PqxError {
-    fn from(e: amqprs::error::Error) -> Self {
-        PqxError::RbMQ(e)
-    }
-}
-
-impl From<serde_json::Error> for PqxError {
-    fn from(e: serde_json::Error) -> Self {
-        PqxError::Serde(e)
-    }
-}
-
-impl From<pqx_util::PqxUtilError> for PqxError {
-    fn from(e: pqx_util::PqxUtilError) -> Self {
-        PqxError::Util(e)
     }
 }

@@ -5,6 +5,8 @@
 
 use thiserror::Error;
 
+use super::impl_from_error;
+
 pub type PqxUtilResult<T> = Result<T, PqxUtilError>;
 
 #[derive(Debug, Error)]
@@ -25,29 +27,10 @@ pub enum PqxUtilError {
     Custom(&'static str),
 }
 
-impl From<std::io::Error> for PqxUtilError {
-    fn from(e: std::io::Error) -> Self {
-        PqxUtilError::StdIO(e)
-    }
-}
-
-impl From<serde_json::Error> for PqxUtilError {
-    fn from(e: serde_json::Error) -> Self {
-        PqxUtilError::SerdeJson(e)
-    }
-}
-
-impl From<serde_yaml::Error> for PqxUtilError {
-    fn from(e: serde_yaml::Error) -> Self {
-        PqxUtilError::SerdeYaml(e)
-    }
-}
-
-impl From<sea_orm::error::DbErr> for PqxUtilError {
-    fn from(e: sea_orm::error::DbErr) -> Self {
-        PqxUtilError::SeaOrm(e)
-    }
-}
+impl_from_error!(std::io::Error, PqxUtilError, StdIO);
+impl_from_error!(serde_json::Error, PqxUtilError, SerdeJson);
+impl_from_error!(serde_yaml::Error, PqxUtilError, SerdeYaml);
+impl_from_error!(sea_orm::error::DbErr, PqxUtilError, SeaOrm);
 
 impl From<&'static str> for PqxUtilError {
     fn from(e: &'static str) -> Self {

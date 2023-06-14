@@ -82,7 +82,7 @@ impl<'a> TryFrom<&'a Command> for FieldTable {
 
 // Command -> ActiveModel
 impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
-    type Error = Error;
+    type Error = std::num::TryFromIntError;
 
     fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
         let am = message_history::ActiveModel {

@@ -3,6 +3,7 @@
 //! date: 2023/06/04 10:17:03 Sunday
 //! brief:
 
+use pqx_util::impl_from_error;
 use thiserror::Error;
 
 pub type MqApiResult<T> = Result<T, MqApiError>;
@@ -25,17 +26,8 @@ impl MqApiError {
     }
 }
 
-impl From<reqwest::Error> for MqApiError {
-    fn from(e: reqwest::Error) -> Self {
-        Self::Reqwest(e)
-    }
-}
-
-impl From<pqx_util::PqxUtilError> for MqApiError {
-    fn from(e: pqx_util::PqxUtilError) -> Self {
-        Self::Util(e)
-    }
-}
+impl_from_error!(reqwest::Error, MqApiError, Reqwest);
+impl_from_error!(pqx_util::PqxUtilError, MqApiError, Util);
 
 impl From<&'static str> for MqApiError {
     fn from(e: &'static str) -> Self {
