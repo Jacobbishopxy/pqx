@@ -3,13 +3,17 @@
 //! date: 2023/06/13 08:50:37 Tuesday
 //! brief:
 
+use anyhow::Result;
 use async_trait::async_trait;
 use pqx::ec::CmdAsyncExecutor;
 use pqx::error::{PqxError, PqxResult};
 use pqx::mq::Consumer;
-use tracing::instrument;
+use pqx::pqx_util::{PersistClient, PersistConn, PqxUtilError};
+use sea_orm::ActiveModelTrait;
+use tracing::{debug, instrument};
 
 use crate::adt::Command;
+use crate::entities::message_history;
 
 // ================================================================================================
 // Executor
@@ -18,7 +22,7 @@ use crate::adt::Command;
 #[derive(Clone)]
 pub struct Executor {
     exec: CmdAsyncExecutor,
-    // persist:
+    persist: PersistClient,
 }
 
 impl std::fmt::Debug for Executor {
@@ -30,10 +34,14 @@ impl std::fmt::Debug for Executor {
 }
 
 impl Executor {
-    pub fn new() -> Self {
-        Self {
+    pub async fn new(conn: PersistConn) -> Result<Self> {
+        let mut persist = PersistClient::new(conn);
+        persist.connect().await?;
+
+        Ok(Self {
             exec: CmdAsyncExecutor::new(),
-        }
+            persist,
+        })
     }
 }
 
@@ -42,8 +50,12 @@ impl Consumer<Command> for Executor {
     #[instrument]
     async fn consume(&mut self, content: &Command) -> PqxResult<bool> {
         let es = self.exec.exec(1, content.cmd().clone()).await?;
+        debug!("{}", &es);
 
-        // TODO: persist
+        // persist message into db
+        let db = self.persist.db().expect("connection established");
+        let rcd = message_history::ActiveModel::try_from(content)?;
+        rcd.insert(db).await.map_err(PqxUtilError::SeaOrm)?;
 
         Ok(es.success())
     }

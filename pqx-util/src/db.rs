@@ -37,6 +37,7 @@ impl From<PersistConn> for ConnectOptions {
 // PersistClient
 // ================================================================================================
 
+#[derive(Clone)]
 pub struct PersistClient {
     conn: ConnectOptions,
     db: Option<DatabaseConnection>,
@@ -68,6 +69,10 @@ impl PersistClient {
 
     pub fn url(&self) -> &str {
         self.conn.get_url()
+    }
+
+    pub fn db(&self) -> Option<&DatabaseConnection> {
+        self.db.as_ref()
     }
 
     pub fn with_max_connection(&mut self, size: u32) -> &mut Self {
