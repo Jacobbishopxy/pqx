@@ -11,6 +11,9 @@
 //! 6. cancel_consume
 //! 7. block
 
+use std::fmt::Debug;
+use std::marker::PhantomData;
+
 use amqprs::channel::*;
 use amqprs::consumer::AsyncConsumer;
 use serde::de::DeserializeOwned;
@@ -59,22 +62,25 @@ where
 // Subscriber
 // ================================================================================================
 
-pub struct Subscriber<'a, M, S>
+pub struct Subscriber<'a, M, S, R>
 where
     M: Send + Sync + DeserializeOwned + 'static,
-    S: Send + Sync + Consumer<M> + 'static,
+    S: Send + Sync + Consumer<M, R> + 'static,
+    R: Send + Sync + Clone + Debug + 'static,
 {
     channel: &'a Channel,
     consume_args: Option<BasicConsumeArguments>,
-    consumer: ConsumerWrapper<M, S>,
+    consumer: ConsumerWrapper<M, S, R>,
     consumer_tag: Option<String>,
     queue: Option<String>,
+    _consumer_result_type: PhantomData<R>,
 }
 
-impl<'a, M, S> Subscriber<'a, M, S>
+impl<'a, M, S, R> Subscriber<'a, M, S, R>
 where
     M: Send + Sync + DeserializeOwned + Clone + 'static,
-    S: Send + Sync + Consumer<M> + 'static,
+    S: Send + Sync + Consumer<M, R> + 'static,
+    R: Send + Sync + Clone + Debug + 'static,
 {
     pub fn new(channel: &'a Channel, consumer: S) -> Self {
         Self {
@@ -83,6 +89,7 @@ where
             consumer: ConsumerWrapper::new(consumer),
             consumer_tag: None,
             queue: None,
+            _consumer_result_type: PhantomData,
         }
     }
 

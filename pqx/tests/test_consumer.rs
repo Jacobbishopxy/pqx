@@ -82,17 +82,24 @@ impl CustomConsumer {
 }
 
 #[async_trait]
-impl Consumer<DevMsg> for CustomConsumer {
+impl Consumer<DevMsg, String> for CustomConsumer {
     #[instrument]
-    async fn consume(&mut self, content: &DevMsg) -> PqxResult<bool> {
-        let es = self.executor.exec(1, content.cmd.clone()).await?;
-
-        Ok(es.success())
+    async fn consume(&mut self, content: &DevMsg) -> PqxResult<ConsumerResult<String>> {
+        match self.executor.exec(1, content.cmd.clone()).await {
+            Ok(es) => {
+                if es.success() {
+                    Ok(ConsumerResult::success("yes".to_string()))
+                } else {
+                    Ok(ConsumerResult::failure("no".to_string()))
+                }
+            }
+            Err(e) => Err(e),
+        }
     }
 
     // We do it on purpose to see program exits elegantly (check `soft_fail_block`)
-    async fn success_callback(&mut self, _content: &DevMsg) -> PqxResult<()> {
-        println!(">>> fail on purpose!");
+    async fn success_callback(&mut self, _content: &DevMsg, result: String) -> PqxResult<()> {
+        println!(">>> fail on purpose! {}", result);
         Err(PqxError::custom("fail on purpose!"))
     }
 }

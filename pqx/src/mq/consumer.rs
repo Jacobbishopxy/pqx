@@ -3,6 +3,7 @@
 //! date: 2023/05/28 11:06:07 Sunday
 //! brief:
 
+use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -47,16 +48,41 @@ impl AsyncConsumer for PqxDefaultConsumer {
 }
 
 // ================================================================================================
+// ConsumerResult
+// ================================================================================================
+
+#[derive(Debug)]
+pub enum ConsumerResult<R: Send + Debug> {
+    Success(R),
+    Failure(R),
+}
+
+impl<R: Send + Debug> ConsumerResult<R> {
+    pub fn success(r: R) -> Self {
+        Self::Success(r)
+    }
+
+    pub fn failure(r: R) -> Self {
+        Self::Failure(r)
+    }
+}
+
+// ================================================================================================
 // Consumer
 // ================================================================================================
 
 #[async_trait]
-pub trait Consumer<M: DeserializeOwned>: Clone {
+pub trait Consumer<M, R>
+where
+    M: DeserializeOwned,
+    R: Send + Debug + 'static,
+    Self: Clone,
+{
     // consumer behavior:
-    // Ok(true) => handle_success
-    // Ok(false) => handle_requeue
+    // Ok(Success(R)) => handle_success
+    // Ok(Failure(R)) => handle_requeue
     // Err(_) => handle_discard
-    async fn consume(&mut self, content: &M) -> PqxResult<bool>;
+    async fn consume(&mut self, content: &M) -> PqxResult<ConsumerResult<R>>;
 
     // ================================================================================================
     // default implementation
@@ -68,12 +94,12 @@ pub trait Consumer<M: DeserializeOwned>: Clone {
     fn handle_props(&self, props: BasicProperties) {}
 
     #[allow(unused_variables)]
-    async fn success_callback(&mut self, content: &M) -> PqxResult<()> {
+    async fn success_callback(&mut self, content: &M, result: R) -> PqxResult<()> {
         Ok(())
     }
 
     #[allow(unused_variables)]
-    async fn requeue_callback(&mut self, content: &M) -> PqxResult<()> {
+    async fn requeue_callback(&mut self, content: &M, result: R) -> PqxResult<()> {
         Ok(())
     }
 
@@ -96,21 +122,23 @@ pub trait Consumer<M: DeserializeOwned>: Clone {
 // ================================================================================================
 
 #[derive(Clone)]
-pub(crate) struct ConsumerWrapper<M, T>
+pub(crate) struct ConsumerWrapper<M, T, R>
 where
     M: Send + DeserializeOwned,
-    T: Send + Consumer<M> + Clone,
+    T: Send + Consumer<M, R>,
+    R: Send + Clone + Debug + 'static,
 {
     consumer: T,
     consume_signal_sender: Sender<bool>,
     consume_signal_receiver: Arc<Mutex<Receiver<bool>>>,
-    _msg_type: PhantomData<M>,
+    _msg_type: PhantomData<(M, R)>,
 }
 
-impl<M, T> ConsumerWrapper<M, T>
+impl<M, T, R> ConsumerWrapper<M, T, R>
 where
     M: Send + DeserializeOwned,
-    T: Send + Consumer<M>,
+    T: Send + Consumer<M, R>,
+    R: Send + Clone + Debug + 'static,
 {
     pub fn new(consumer: T) -> Self {
         let (tx, rx) = tokio::sync::mpsc::channel(1);
@@ -158,17 +186,29 @@ where
         Ok(())
     }
 
-    async fn handle_success(&mut self, channel: &Channel, deliver: Deliver, message: &M) {
+    async fn handle_success(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        message: &M,
+        result: R,
+    ) {
         // if callback failed, signal consume to false
-        if let Err(_) = self.consumer().success_callback(message).await {
+        if let Err(_) = self.consumer().success_callback(message, result).await {
             self.signal_consume(false).await;
         };
         let _ = self.ack(channel, deliver).await;
     }
 
-    async fn handle_requeue(&mut self, channel: &Channel, deliver: Deliver, message: &M) {
+    async fn handle_requeue(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        message: &M,
+        result: R,
+    ) {
         // if callback failed, signal consume to false
-        if let Err(_) = self.consumer().requeue_callback(message).await {
+        if let Err(_) = self.consumer().requeue_callback(message, result).await {
             self.signal_consume(false).await;
         };
         let _ = self.nack(channel, deliver, true).await;
@@ -184,10 +224,11 @@ where
 }
 
 #[async_trait]
-impl<M, T> AsyncConsumer for ConsumerWrapper<M, T>
+impl<M, T, R> AsyncConsumer for ConsumerWrapper<M, T, R>
 where
     M: Send + Sync + DeserializeOwned,
-    T: Send + Sync + Consumer<M>,
+    T: Send + Sync + Consumer<M, R>,
+    R: Send + Sync + Clone + Debug,
 {
     async fn consume(
         &mut self,
@@ -212,8 +253,8 @@ where
 
         // according to biz logic determine whether responds Ack/Requeue/Discard
         match fut_res {
-            Ok(true) => self.handle_success(channel, deliver, &msg).await,
-            Ok(false) => self.handle_requeue(channel, deliver, &msg).await,
+            Ok(ConsumerResult::Success(r)) => self.handle_success(channel, deliver, &msg, r).await,
+            Ok(ConsumerResult::Failure(r)) => self.handle_requeue(channel, deliver, &msg, r).await,
             Err(e) => self.handle_discard(channel, deliver, e).await,
         };
     }
