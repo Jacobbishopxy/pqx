@@ -4,12 +4,13 @@
 //! brief:
 
 use anyhow::Error;
+use chrono::Local;
 use pqx::amqprs::{FieldName, FieldTable, FieldValue};
 use pqx::ec::CmdArg;
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
-use crate::entities::message_history;
+use crate::entities::{message_history, message_result};
 
 // ================================================================================================
 // Command
@@ -92,9 +93,46 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
             waiting_timeout: Set(cmd.waiting_timeout.map(i64::try_from).transpose()?),
             consuming_timeout: Set(cmd.consuming_timeout.map(i64::try_from).transpose()?),
             cmd: Set(serde_json::json!(cmd.cmd)),
+            time: Set(Local::now()),
             ..Default::default()
         };
 
         Ok(am)
+    }
+}
+
+// ================================================================================================
+// ExecutionResult
+// ================================================================================================
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExecutionResult {
+    pub exit_code: i16,
+    pub result: Option<String>,
+}
+
+impl ExecutionResult {
+    pub fn new(exit_code: i16) -> Self {
+        Self {
+            exit_code,
+            result: None,
+        }
+    }
+
+    pub fn new_with_result(exit_code: i16, result: impl Into<String>) -> Self {
+        Self {
+            exit_code,
+            result: Some(result.into()),
+        }
+    }
+
+    pub fn into_active_model(&self, history_id: i64) -> message_result::ActiveModel {
+        message_result::ActiveModel {
+            history_id: Set(history_id),
+            exit_code: Set(self.exit_code),
+            result: Set(self.result.clone()),
+            time: Set(Local::now()),
+            ..Default::default()
+        }
     }
 }

@@ -24,6 +24,7 @@ pub struct Model {
     #[sea_orm(nullable)]
     pub consuming_timeout: Option<i64>,
     pub cmd: Json,
+    pub time: chrono::DateTime<chrono::Local>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
@@ -34,7 +35,7 @@ pub enum Relation {
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
-            Self::Result => Entity::has_one(super::message_result::Entity).into(),
+            Relation::Result => Entity::has_one(super::message_result::Entity).into(),
         }
     }
 }

@@ -21,6 +21,8 @@ use crate::entities::message_history;
 // Executor
 // ================================================================================================
 
+// TODO: replace `persist` by `MessagePersistent`
+
 #[derive(Clone)]
 pub struct Executor {
     exec: CmdAsyncExecutor,
