@@ -1,9 +1,4 @@
 [workspace]
 resolver = "2"
-members=[
-    "pqx-util",
-    "pqx",
-    "mq-api",
-    "pqx-app"
-]
-exclude=[]
+members = ["pqx-util", "pqx", "mq-api", "pqx-app"]
+exclude = []

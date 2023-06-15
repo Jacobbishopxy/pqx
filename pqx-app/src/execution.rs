@@ -20,31 +20,39 @@ use crate::persistence::MessagePersistent;
 // ================================================================================================
 
 #[derive(Clone)]
-pub struct Executor<'a> {
+pub struct Executor {
     exec: CmdAsyncExecutor,
-    persist: MessagePersistent<'a>,
+    persist: MessagePersistent,
 }
 
-impl<'a> std::fmt::Debug for Executor<'a> {
+impl std::fmt::Debug for Executor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Executor")
             .field("exec", &"CmdAsyncExecutor")
-            .field("persist", &"MessagePersistent<'_>")
+            .field("persist", &"MessagePersistent")
             .finish()
     }
 }
 
-impl<'a> Executor<'a> {
-    pub fn new(persist: MessagePersistent<'a>) -> Self {
+impl Executor {
+    pub fn new(persist: MessagePersistent) -> Self {
         Self {
             exec: CmdAsyncExecutor::new(),
             persist,
         }
     }
+
+    pub fn exec(&self) -> &CmdAsyncExecutor {
+        &self.exec
+    }
+
+    pub fn exec_mut(&mut self) -> &mut CmdAsyncExecutor {
+        &mut self.exec
+    }
 }
 
 #[async_trait]
-impl<'a> Consumer<Command, ExitStatus> for Executor<'a> {
+impl Consumer<Command, ExitStatus> for Executor {
     #[instrument]
     async fn consume(&mut self, content: &Command) -> PqxResult<ConsumerResult<ExitStatus>> {
         let es = self.exec.exec(1, content.cmd().clone()).await?;
@@ -86,8 +94,9 @@ impl<'a> Consumer<Command, ExitStatus> for Executor<'a> {
     }
 
     #[instrument]
-    async fn discard_callback(&mut self, _error: PqxError) -> PqxResult<()> {
-        //
+    async fn discard_callback(&mut self, error: PqxError) -> PqxResult<()> {
+        debug!("{} discard error: {:?}", now!(), error);
+
         Ok(())
     }
 }

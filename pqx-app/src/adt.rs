@@ -16,7 +16,7 @@ use crate::entities::{message_history, message_result};
 // Command
 // ================================================================================================
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Command {
     pub consumer_ids: Vec<String>,
     pub retry: Option<usize>,

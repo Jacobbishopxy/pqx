@@ -39,8 +39,8 @@ impl From<PersistConn> for ConnectOptions {
 
 #[derive(Clone)]
 pub struct PersistClient {
-    conn: ConnectOptions,
-    db: Option<DatabaseConnection>,
+    pub conn: ConnectOptions,
+    pub db: Option<DatabaseConnection>,
 }
 
 impl PersistClient {

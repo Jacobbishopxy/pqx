@@ -9,8 +9,15 @@ pqx = { path = "../pqx" }
 
 anyhow = "1"
 async-trait = "0"
-tracing = "0"
-sea-orm = { version = "0", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-chrono", "with-json"] }
 chrono = "0"
+sea-orm = { version = "0", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-chrono",
+    "with-json",
+] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tracing = "0"
+tokio = { version = "1", features = ["rt", "macros"] }
