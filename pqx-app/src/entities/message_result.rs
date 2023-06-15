@@ -15,7 +15,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,
     pub history_id: i64,
-    pub exit_code: i16,
+    pub exit_code: i32,
     #[sea_orm(nullable)]
     pub result: Option<String>,
     pub time: chrono::DateTime<chrono::Local>,

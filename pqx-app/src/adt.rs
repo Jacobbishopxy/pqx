@@ -107,19 +107,19 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExecutionResult {
-    pub exit_code: i16,
+    pub exit_code: i32,
     pub result: Option<String>,
 }
 
 impl ExecutionResult {
-    pub fn new(exit_code: i16) -> Self {
+    pub fn new(exit_code: i32) -> Self {
         Self {
             exit_code,
             result: None,
         }
     }
 
-    pub fn new_with_result(exit_code: i16, result: impl Into<String>) -> Self {
+    pub fn new_with_result(exit_code: i32, result: impl Into<String>) -> Self {
         Self {
             exit_code,
             result: Some(result.into()),

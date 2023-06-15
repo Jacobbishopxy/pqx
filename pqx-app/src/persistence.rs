@@ -14,6 +14,7 @@ use crate::entities::{message_history, message_result};
 // MessagePersistent
 // ================================================================================================
 
+#[derive(Clone)]
 pub struct MessagePersistent<'a> {
     db: &'a DatabaseConnection,
 }
