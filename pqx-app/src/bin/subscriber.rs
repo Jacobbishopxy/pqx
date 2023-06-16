@@ -7,15 +7,24 @@ use std::sync::Arc;
 
 use pqx::ec::util::*;
 use pqx::error::PqxResult;
-use pqx::mq::{MqClient, Subscriber};
-use pqx::pqx_util::{logging_init, now, PersistClient};
+use pqx::mq::{MqClient, MqConn, Subscriber};
+use pqx::pqx_util::{logging_init, now, read_yaml, PersistClient, PersistConn};
 use pqx_app::execution::Executor;
 use pqx_app::persistence::MessagePersistent;
+use serde::Deserialize;
 use tracing::{error, info, instrument};
+
+// ================================================================================================
+// Const
+// ================================================================================================
 
 const LOGGING_DIR: &str = ".";
 const FILENAME_PREFIX: &str = "pqx_subscriber";
 const QUE: &str = "pqx.que.1";
+
+// ================================================================================================
+// Helper
+// ================================================================================================
 
 // PANIC if file not found!
 fn get_conn_yaml_path(filename: &str) -> std::path::PathBuf {
@@ -37,6 +46,16 @@ pub async fn logging_error(s: String) -> PqxResult<()> {
 }
 
 // ================================================================================================
+// Cfg
+// ================================================================================================
+
+#[derive(Deserialize)]
+struct Config {
+    mq: MqConn,
+    db: PersistConn,
+}
+
+// ================================================================================================
 // Main
 // ================================================================================================
 
@@ -44,19 +63,21 @@ pub async fn logging_error(s: String) -> PqxResult<()> {
 async fn main() {
     logging_init(LOGGING_DIR, FILENAME_PREFIX);
 
-    // mq
-    let pth = get_conn_yaml_path("mq.yml");
+    // read config
+    let config_path = get_conn_yaml_path("config.yml");
+    let config: Config = read_yaml(config_path.to_str().unwrap()).unwrap();
+
+    // setup mq
     let mut mq = MqClient::new();
-    mq.connect_by_yaml(pth.to_str().unwrap()).await.unwrap();
+    mq.connect(config.mq).await.unwrap();
     mq.open_channel(None).await.unwrap();
 
-    // db
-    let pth = get_conn_yaml_path("db.yml");
-    let mut ps = PersistClient::new_by_yaml(pth.to_str().unwrap()).unwrap();
+    // setup db
+    let mut ps = PersistClient::new(config.db);
     ps.connect().await.unwrap();
     let mp = MessagePersistent::new(ps.db.unwrap());
 
-    // consumer
+    // setup consumer
     let mut consumer = Executor::new(mp);
     consumer
         .exec_mut()

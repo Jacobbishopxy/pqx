@@ -13,7 +13,6 @@ use pqx_util::{read_json, read_yaml};
 use serde::{Deserialize, Serialize};
 
 use super::{get_channel, get_connection};
-use crate::cfg::CfgMqConn;
 use crate::error::PqxResult;
 
 // ================================================================================================
@@ -21,12 +20,12 @@ use crate::error::PqxResult;
 // ================================================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConnArg<'a> {
-    pub host: &'a str,
+pub struct MqConn {
+    pub host: String,
     pub port: u16,
-    pub user: &'a str,
-    pub pass: &'a str,
-    pub vhost: Option<&'a str>,
+    pub user: String,
+    pub pass: String,
+    pub vhost: Option<String>,
 }
 
 // ================================================================================================
@@ -67,8 +66,8 @@ impl MqClient {
         Self::default()
     }
 
-    pub async fn connect(&mut self, conn_arg: ConnArg<'_>) -> PqxResult<()> {
-        let ConnArg {
+    pub async fn connect(&mut self, conn_arg: MqConn) -> PqxResult<()> {
+        let MqConn {
             host,
             port,
             user,
@@ -76,7 +75,7 @@ impl MqClient {
             vhost,
         } = conn_arg;
 
-        let mut arg = OpenConnectionArguments::new(host, port, user, pass);
+        let mut arg = OpenConnectionArguments::new(&host, port, &user, &pass);
         if let Some(vh) = vhost {
             arg.virtual_host(vh.as_ref());
         }
@@ -87,17 +86,15 @@ impl MqClient {
     }
 
     pub async fn connect_by_yaml(&mut self, path: impl AsRef<str>) -> PqxResult<()> {
-        let cfg: CfgMqConn = read_yaml(path)?;
-        let conn_arg = ConnArg::from(&cfg);
+        let cfg: MqConn = read_yaml(path)?;
 
-        self.connect(conn_arg).await
+        self.connect(cfg).await
     }
 
     pub async fn connect_by_json(&mut self, path: impl AsRef<str>) -> PqxResult<()> {
-        let cfg: CfgMqConn = read_json(path)?;
-        let conn_arg = ConnArg::from(&cfg);
+        let cfg: MqConn = read_json(path)?;
 
-        self.connect(conn_arg).await
+        self.connect(cfg).await
     }
 
     pub async fn disconnect(&mut self) -> PqxResult<()> {

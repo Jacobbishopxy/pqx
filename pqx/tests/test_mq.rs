@@ -21,12 +21,12 @@ const EXCHG: &str = "amq.direct";
 const ROUT: &str = "rbmq-rs-rout";
 const QUE: &str = "rbmq-rs-que";
 
-static CONN_ARG: Lazy<ConnArg> = Lazy::new(|| ConnArg {
-    host: HOST,
-    port: PORT,
-    user: USER,
-    pass: PASS,
-    vhost: Some(VHOST),
+static CONN_ARG: Lazy<MqConn> = Lazy::new(|| MqConn {
+    host: HOST.to_owned(),
+    port: PORT.to_owned(),
+    user: USER.to_owned(),
+    pass: PASS.to_owned(),
+    vhost: Some(VHOST.to_owned()),
 });
 
 // ================================================================================================
