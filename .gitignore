@@ -14,3 +14,4 @@ Catalog.md
 pqx/conn.yml
 mq-api/conn.yml
 pqx/log
+pqx-app/config.yml

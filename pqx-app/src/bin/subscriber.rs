@@ -5,6 +5,7 @@
 
 use std::sync::Arc;
 
+use clap::Parser;
 use pqx::ec::util::*;
 use pqx::error::PqxResult;
 use pqx::mq::{MqClient, MqConn, Subscriber};
@@ -20,7 +21,6 @@ use tracing::{error, info, instrument};
 
 const LOGGING_DIR: &str = ".";
 const FILENAME_PREFIX: &str = "pqx_subscriber";
-const QUE: &str = "pqx.que.1";
 
 // ================================================================================================
 // Helper
@@ -46,13 +46,18 @@ pub async fn logging_error(s: String) -> PqxResult<()> {
 }
 
 // ================================================================================================
-// Cfg
+// Cfg & Args
 // ================================================================================================
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Config {
     mq: MqConn,
     db: PersistConn,
+}
+
+#[derive(Debug, Parser)]
+struct Args {
+    que: String,
 }
 
 // ================================================================================================
@@ -61,6 +66,8 @@ struct Config {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
+    let args = Args::parse();
+
     logging_init(LOGGING_DIR, FILENAME_PREFIX);
 
     // read config
@@ -84,11 +91,14 @@ async fn main() {
         .register_stdout_fn(Arc::new(logging_info))
         .register_stderr_fn(Arc::new(logging_error));
 
+    // setup subscriber
     let chan = mq.channel().unwrap();
     let mut subscriber = Subscriber::new(chan, consumer);
     subscriber.set_consumer_prefetch(0, 1, false).await.unwrap();
 
-    subscriber.consume(QUE).await.unwrap();
+    // start consume
+    subscriber.consume(&args.que).await.unwrap();
 
+    // block until fail
     subscriber.soft_fail_block().await;
 }
