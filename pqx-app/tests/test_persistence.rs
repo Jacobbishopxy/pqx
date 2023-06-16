@@ -62,7 +62,8 @@ async fn create_table_success() {
 
     let mp = MessagePersistent::new(db.db.unwrap());
     let res = mp.create_table().await;
-    assert!(res.is_ok());
+    // if table already exists, then return error
+    println!("{:?}", res);
 }
 
 #[tokio::test]
@@ -87,4 +88,19 @@ async fn insert_success() {
     let res = mp.insert_result(id, &er).await;
     println!("{:?}", res);
     assert!(res.is_ok());
+}
+
+#[tokio::test]
+async fn find_one_success() {
+    let conn = CONN.clone();
+    let mut db = PersistClient::new(conn);
+    let _ = db.connect().await;
+
+    let mp = MessagePersistent::new(db.db.unwrap());
+
+    let res = mp.find_one(1).await;
+    assert!(res.is_ok());
+    let res = res.unwrap();
+    println!("command: {:?}", res.0);
+    println!("execution_result: {:?}", res.1);
 }

@@ -7,6 +7,7 @@ use anyhow::Error;
 use chrono::Local;
 use pqx::amqprs::{FieldName, FieldTable, FieldValue};
 use pqx::ec::CmdArg;
+use pqx::error::PqxError;
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
@@ -101,6 +102,27 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
     }
 }
 
+impl TryFrom<message_history::Model> for Command {
+    type Error = PqxError;
+
+    fn try_from(m: message_history::Model) -> Result<Self, Self::Error> {
+        let res = Self {
+            consumer_ids: m
+                .consumer_ids
+                .split(",")
+                .map(String::from)
+                .collect::<Vec<_>>(),
+            retry: m.retry.map(usize::try_from).transpose()?,
+            poke: m.poke.map(usize::try_from).transpose()?,
+            waiting_timeout: m.waiting_timeout.map(usize::try_from).transpose()?,
+            consuming_timeout: m.consuming_timeout.map(usize::try_from).transpose()?,
+            cmd: serde_json::from_value(m.cmd)?,
+        };
+
+        Ok(res)
+    }
+}
+
 // ================================================================================================
 // ExecutionResult
 // ================================================================================================
@@ -133,6 +155,15 @@ impl ExecutionResult {
             result: Set(self.result.clone()),
             time: Set(Local::now()),
             ..Default::default()
+        }
+    }
+}
+
+impl From<message_result::Model> for ExecutionResult {
+    fn from(m: message_result::Model) -> Self {
+        Self {
+            exit_code: m.exit_code,
+            result: m.result,
         }
     }
 }

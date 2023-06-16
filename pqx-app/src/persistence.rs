@@ -5,7 +5,7 @@
 
 use pqx::error::PqxResult;
 use pqx::pqx_util::PqxUtilError;
-use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, Schema};
+use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, ModelTrait, Schema};
 
 use crate::adt::{Command, ExecutionResult};
 use crate::entities::{message_history, message_result};
@@ -59,6 +59,27 @@ impl<'a> MessagePersistent {
             .last_insert_id;
 
         Ok(id)
+    }
+
+    pub async fn find_one(&self, history_id: i64) -> PqxResult<(Command, Option<ExecutionResult>)> {
+        let history = message_history::Entity::find_by_id(history_id)
+            .one(&self.db)
+            .await
+            .map_err(PqxUtilError::SeaOrm)?;
+
+        if let Some(hs) = history {
+            let er = hs
+                .find_related(message_result::Entity)
+                .one(&self.db)
+                .await
+                .map_err(PqxUtilError::SeaOrm)?
+                .map(ExecutionResult::from);
+
+            let cmd = Command::try_from(hs)?;
+            Ok((cmd, er))
+        } else {
+            Err("history not fount".into())
+        }
     }
 
     // TODO: query, pagination, sort, find...
