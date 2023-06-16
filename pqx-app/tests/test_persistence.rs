@@ -55,6 +55,17 @@ async fn connection_success() {
 }
 
 #[tokio::test]
+async fn create_table_success() {
+    let conn = CONN.clone();
+    let mut db = PersistClient::new(conn);
+    let _ = db.connect().await;
+
+    let mp = MessagePersistent::new(db.db.unwrap());
+    let res = mp.create_table().await;
+    assert!(res.is_ok());
+}
+
+#[tokio::test]
 async fn insert_success() {
     let conn = CONN.clone();
     let mut db = PersistClient::new(conn);

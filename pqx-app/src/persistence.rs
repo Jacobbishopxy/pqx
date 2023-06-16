@@ -5,7 +5,7 @@
 
 use pqx::error::PqxResult;
 use pqx::pqx_util::PqxUtilError;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, Schema};
 
 use crate::adt::{Command, ExecutionResult};
 use crate::entities::{message_history, message_result};
@@ -22,6 +22,21 @@ pub struct MessagePersistent {
 impl<'a> MessagePersistent {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
+    }
+
+    pub async fn create_table(&self) -> PqxResult<()> {
+        let builder = self.db.get_database_backend();
+        let schema = Schema::new(builder);
+
+        // create message_history table
+        let stmt = builder.build(&schema.create_table_from_entity(message_history::Entity));
+        self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
+
+        // create message_result table
+        let stmt = builder.build(&schema.create_table_from_entity(message_result::Entity));
+        self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
+
+        Ok(())
     }
 
     pub async fn insert_history(&self, cmd: &Command) -> PqxResult<i64> {
