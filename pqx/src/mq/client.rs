@@ -8,11 +8,11 @@ use std::sync::Arc;
 use amqprs::callbacks::{ChannelCallback, ConnectionCallback};
 use amqprs::channel::*;
 use amqprs::connection::{Connection, OpenConnectionArguments};
-use amqprs::{FieldName, FieldTable, FieldValue};
+use amqprs::FieldTable;
 use pqx_util::{read_json, read_yaml};
 use serde::{Deserialize, Serialize};
 
-use super::{get_channel, get_connection};
+use super::{get_channel, get_connection, FieldTableBuilder};
 use crate::error::PqxResult;
 
 // ================================================================================================
@@ -274,22 +274,12 @@ impl MqClient {
         ttl: Option<i64>,
     ) -> PqxResult<()> {
         let mut args = QueueDeclareArguments::durable_client_named(que);
-        let mut ft = FieldTable::new();
-        ft.insert(
-            FieldName::try_from("x-dead-letter-exchange").unwrap(),
-            FieldValue::from(String::from(dlx)),
-        );
-        ft.insert(
-            FieldName::try_from("x-dead-letter-routing-key").unwrap(),
-            FieldValue::from(String::from(dlx_rout)),
-        );
+        let mut ft = FieldTableBuilder::new();
+        ft.x_dead_letter_exchange(dlx, dlx_rout);
         if let Some(t) = ttl {
-            ft.insert(
-                FieldName::try_from("x-message-ttl").unwrap(),
-                FieldValue::l(t),
-            );
+            ft.x_message_ttl(t);
         }
-        args.arguments(ft);
+        args.arguments(ft.finish());
 
         self.declare_queue_by_args(args).await?;
 

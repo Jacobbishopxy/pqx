@@ -21,6 +21,7 @@ use tracing::{error, info, instrument};
 
 const LOGGING_DIR: &str = ".";
 const FILENAME_PREFIX: &str = "pqx_subscriber";
+const CONFIG_FILE: &str = "config.yml";
 
 // ================================================================================================
 // Helper
@@ -71,7 +72,7 @@ async fn main() {
     logging_init(LOGGING_DIR, FILENAME_PREFIX);
 
     // read config
-    let config_path = get_conn_yaml_path("config.yml");
+    let config_path = get_conn_yaml_path(CONFIG_FILE);
     let config: Config = read_yaml(config_path.to_str().unwrap()).unwrap();
 
     // setup mq

@@ -5,11 +5,13 @@
 
 pub mod client;
 pub mod consumer;
+pub mod predefined;
 pub mod publish;
 pub mod subscribe;
 
 pub use client::*;
 pub use consumer::*;
+pub use predefined::*;
 pub use publish::*;
 pub use subscribe::*;
 
