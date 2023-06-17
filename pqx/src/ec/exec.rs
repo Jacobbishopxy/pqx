@@ -236,7 +236,7 @@ impl CmdAsyncExecutor {
         self
     }
 
-    pub async fn exec(&self, channel_buffer: usize, arg: CmdArg) -> PqxResult<ExitStatus> {
+    pub async fn exec(&self, channel_buffer: usize, arg: &CmdArg) -> PqxResult<ExitStatus> {
         let CmdChild {
             mut child,
             child_stdout,

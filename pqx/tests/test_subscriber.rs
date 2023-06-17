@@ -64,7 +64,7 @@ impl AsyncConsumer for DevCmdConsumer {
             Ok(m) => {
                 println!("msg: {:?}", m);
 
-                let res = self.executor.exec(1, m).await;
+                let res = self.executor.exec(1, &m).await;
                 println!("res: {:?}", res);
             }
             Err(e) => println!("err: {:?}", e),

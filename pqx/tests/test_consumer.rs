@@ -85,7 +85,7 @@ impl CustomConsumer {
 impl Consumer<DevMsg, String> for CustomConsumer {
     #[instrument]
     async fn consume(&mut self, content: &DevMsg) -> PqxResult<ConsumerResult<String>> {
-        match self.executor.exec(1, content.cmd.clone()).await {
+        match self.executor.exec(1, &content.cmd).await {
             Ok(es) => {
                 if es.success() {
                     Ok(ConsumerResult::success("yes".to_string()))

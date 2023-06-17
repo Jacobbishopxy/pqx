@@ -140,7 +140,7 @@ async fn cmd_executor_success3() {
     let cmd = vec!["cd", &dir, "&&", py, "-u", "print_csv_in_line.py"];
 
     let arg = CmdArg::bash(cmd);
-    let res = executor.exec(1, arg).await;
+    let res = executor.exec(1, &arg).await;
 
     assert!(res.is_ok());
     println!("{:?}", res.unwrap());
@@ -171,7 +171,7 @@ async fn cmd_executor_success4() {
     let script = "print_csv_in_line.py".to_string();
 
     let arg = CmdArg::conda_python(CONDA_ENV, dir.to_string_lossy(), script);
-    let res = executor.exec(1, arg).await;
+    let res = executor.exec(1, &arg).await;
 
     assert!(res.is_ok());
     println!("{:?}", res.unwrap());

@@ -135,7 +135,7 @@ impl AsyncConsumer for CustomConsumer {
         };
 
         // execute command
-        let res = self.executor.exec(1, msg.cmd).await;
+        let res = self.executor.exec(1, &msg.cmd).await;
         println!(">>> execute command: {:?}", res);
 
         match res {
