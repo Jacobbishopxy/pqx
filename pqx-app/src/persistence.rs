@@ -3,12 +3,18 @@
 //! date: 2023/06/13 11:02:30 Tuesday
 //! brief:
 
-use pqx::error::PqxResult;
+use pqx::error::{PqxError, PqxResult};
 use pqx::pqx_util::PqxUtilError;
-use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, ModelTrait, Schema};
+use sea_orm::*;
 
 use crate::adt::{Command, ExecutionResult};
 use crate::entities::{message_history, message_result};
+
+// ================================================================================================
+// types
+// ================================================================================================
+
+pub type MessageHistoryAndResult = (Command, Option<ExecutionResult>);
 
 // ================================================================================================
 // MessagePersistent
@@ -61,26 +67,57 @@ impl<'a> MessagePersistent {
         Ok(id)
     }
 
-    pub async fn find_one(&self, history_id: i64) -> PqxResult<(Command, Option<ExecutionResult>)> {
-        let history = message_history::Entity::find_by_id(history_id)
+    pub async fn find_one(&self, history_id: i64) -> PqxResult<MessageHistoryAndResult> {
+        message_history::Entity::find_by_id(history_id)
+            .find_also_related(message_result::Entity)
             .one(&self.db)
             .await
-            .map_err(PqxUtilError::SeaOrm)?;
-
-        if let Some(hs) = history {
-            let er = hs
-                .find_related(message_result::Entity)
-                .one(&self.db)
-                .await
-                .map_err(PqxUtilError::SeaOrm)?
-                .map(ExecutionResult::from);
-
-            let cmd = Command::try_from(hs)?;
-            Ok((cmd, er))
-        } else {
-            Err("history not fount".into())
-        }
+            .map_err(PqxUtilError::SeaOrm)?
+            .map(|(c, r)| {
+                let cmd = Command::try_from(c)?;
+                let res = r.map(ExecutionResult::from);
+                Ok::<MessageHistoryAndResult, PqxError>((cmd, res))
+            })
+            .transpose()?
+            .ok_or("history not found".into())
     }
 
-    // TODO: query, pagination, sort, find...
+    pub async fn find_many(
+        &self,
+        history_ids: impl IntoIterator<Item = i64>,
+    ) -> PqxResult<Vec<MessageHistoryAndResult>> {
+        message_history::Entity::find()
+            .filter(message_history::Column::Id.is_in(history_ids))
+            .find_also_related(message_result::Entity)
+            .all(&self.db)
+            .await
+            .map_err(PqxUtilError::SeaOrm)?
+            .into_iter()
+            .map(|(c, r)| {
+                let cmd = Command::try_from(c)?;
+                let res = r.map(ExecutionResult::from);
+                Ok((cmd, res))
+            })
+            .collect::<PqxResult<Vec<_>>>()
+    }
+
+    pub async fn find_by_pagination(
+        &self,
+        page: u64,
+        page_size: u64,
+    ) -> PqxResult<Vec<MessageHistoryAndResult>> {
+        message_history::Entity::find()
+            .find_also_related(message_result::Entity)
+            .paginate(&self.db, page_size)
+            .fetch_page(page)
+            .await
+            .map_err(PqxUtilError::SeaOrm)?
+            .into_iter()
+            .map(|(c, r)| {
+                let cmd = Command::try_from(c)?;
+                let res = r.map(ExecutionResult::from);
+                Ok((cmd, res))
+            })
+            .collect::<PqxResult<Vec<_>>>()
+    }
 }

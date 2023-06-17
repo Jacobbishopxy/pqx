@@ -6,8 +6,6 @@ edition = "2021"
 
 [dependencies]
 pqx = { path = "../pqx" }
-
-anyhow = "1"
 async-trait = "0"
 chrono = "0"
 sea-orm = { version = "0", features = [

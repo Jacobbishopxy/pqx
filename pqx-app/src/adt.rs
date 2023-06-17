@@ -3,7 +3,6 @@
 //! date: 2023/06/12 21:12:55 Monday
 //! brief:
 
-use anyhow::Error;
 use chrono::Local;
 use pqx::amqprs::{FieldName, FieldTable, FieldValue};
 use pqx::ec::CmdArg;
@@ -45,7 +44,7 @@ impl Command {
 }
 
 impl<'a> TryFrom<&'a Command> for FieldTable {
-    type Error = Error;
+    type Error = PqxError;
 
     fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
         let mut ft = FieldTable::new();

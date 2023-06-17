@@ -93,3 +93,5 @@ PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system
 - [callback registration](./pqx/tests/test_callback.rs): connection & channel callback registration
 
 - [delay retry](./pqx/tests/test_retry.rs): based on plugin [delayed_message_exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange), implementation of message retry
+
+- [message persistence](./pqx-app/tests/test_persistence.rs): database interaction

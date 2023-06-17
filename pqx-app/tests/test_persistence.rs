@@ -104,3 +104,31 @@ async fn find_one_success() {
     println!("command: {:?}", res.0);
     println!("execution_result: {:?}", res.1);
 }
+
+#[tokio::test]
+async fn find_many_success() {
+    let conn = CONN.clone();
+    let mut db = PersistClient::new(conn);
+    let _ = db.connect().await;
+
+    let mp = MessagePersistent::new(db.db.unwrap());
+
+    let res = mp.find_many([1, 3]).await;
+    assert!(res.is_ok());
+    let res = res.unwrap();
+    println!("res: {:?}", res);
+}
+
+#[tokio::test]
+async fn find_by_pagination_success() {
+    let conn = CONN.clone();
+    let mut db = PersistClient::new(conn);
+    let _ = db.connect().await;
+
+    let mp = MessagePersistent::new(db.db.unwrap());
+
+    let res = mp.find_by_pagination(0, 10).await;
+    assert!(res.is_ok());
+    let res = res.unwrap();
+    println!("res: {:?}", res);
+}
