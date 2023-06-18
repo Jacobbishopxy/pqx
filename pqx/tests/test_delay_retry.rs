@@ -221,7 +221,7 @@ async fn declare_exchanges_and_queue_success() {
     let res = client
         .declare_exchange_with_args(
             EXCHG_DELAY,
-            ExchangeType::Plugin(String::from("x-delayed-message")),
+            &ExchangeType::Plugin(String::from("x-delayed-message")),
             args,
         )
         .await;

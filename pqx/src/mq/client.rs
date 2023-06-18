@@ -12,7 +12,7 @@ use amqprs::FieldTable;
 use pqx_util::{read_json, read_yaml};
 use serde::{Deserialize, Serialize};
 
-use super::{get_channel, get_connection, FieldTableBuilder};
+use super::{get_channel, get_connection, FieldTableBuilder, DELAYED_EXCHANGE};
 use crate::error::PqxResult;
 
 // ================================================================================================
@@ -169,13 +169,29 @@ impl MqClient {
         Ok(())
     }
 
+    pub async fn declare_delayed_exchange(&self, name: &str) -> PqxResult<()> {
+        let mut args = FieldTableBuilder::new();
+        args.x_delayed_type();
+        self.declare_exchange_with_args(name, &DELAYED_EXCHANGE, args.finish())
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn declare_dead_letter_exchange(&self, name: &str) -> PqxResult<()> {
+        self.declare_exchange(name, ExchangeType::Direct).await?;
+
+        Ok(())
+    }
+
     pub async fn declare_exchange_with_args(
         &self,
         name: &str,
-        exchange_type: ExchangeType,
+        exchange_type: &ExchangeType,
         args: FieldTable,
     ) -> PqxResult<()> {
         let chan = get_channel!(self)?;
+
         let exchange_args = ExchangeDeclareArguments::new(name, &exchange_type.to_string())
             .arguments(args)
             .finish();

@@ -3,7 +3,9 @@
 //! date: 2023/06/17 18:15:59 Saturday
 //! brief:
 
+use amqprs::channel::ExchangeType;
 use amqprs::{FieldName, FieldTable, FieldValue};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 // ================================================================================================
@@ -24,6 +26,9 @@ impl ToString for MatchType {
         }
     }
 }
+
+pub static DELAYED_EXCHANGE: Lazy<ExchangeType> =
+    Lazy::new(|| ExchangeType::Plugin(String::from("x-delayed-message")));
 
 // ================================================================================================
 // field table insert
@@ -76,7 +81,7 @@ impl FieldTableBuilder {
         self
     }
 
-    pub fn x_match(&mut self, t: MatchType) -> &mut Self {
+    pub fn x_match(&mut self, t: &MatchType) -> &mut Self {
         self.0.insert(
             FieldName::try_from("x-match").unwrap(),
             FieldValue::from(t.to_string()),

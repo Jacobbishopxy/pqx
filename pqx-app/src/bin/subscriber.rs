@@ -8,11 +8,11 @@ use std::sync::Arc;
 use clap::Parser;
 use pqx::ec::util::*;
 use pqx::error::PqxResult;
-use pqx::mq::{MqClient, MqConn, Subscriber};
-use pqx::pqx_util::{logging_init, now, read_yaml, PersistClient, PersistConn};
+use pqx::mq::{MqClient, Subscriber};
+use pqx::pqx_util::{logging_init, now, read_yaml, PersistClient};
+use pqx_app::cfg::ConnectionsConfig;
 use pqx_app::execution::Executor;
 use pqx_app::persistence::MessagePersistent;
-use serde::Deserialize;
 use tracing::{error, info, instrument};
 
 // ================================================================================================
@@ -21,7 +21,7 @@ use tracing::{error, info, instrument};
 
 const LOGGING_DIR: &str = ".";
 const FILENAME_PREFIX: &str = "pqx_subscriber";
-const CONFIG_FILE: &str = "config.yml";
+const CONN_CONFIG: &str = "conn.yml";
 
 // ================================================================================================
 // Helper
@@ -50,12 +50,6 @@ pub async fn logging_error(s: String) -> PqxResult<()> {
 // Cfg & Args
 // ================================================================================================
 
-#[derive(Debug, Deserialize)]
-struct Config {
-    mq: MqConn,
-    db: PersistConn,
-}
-
 #[derive(Debug, Parser)]
 struct Args {
     que: String,
@@ -72,8 +66,8 @@ async fn main() {
     logging_init(LOGGING_DIR, FILENAME_PREFIX);
 
     // read config
-    let config_path = get_conn_yaml_path(CONFIG_FILE);
-    let config: Config = read_yaml(config_path.to_str().unwrap()).unwrap();
+    let config_path = get_conn_yaml_path(CONN_CONFIG);
+    let config: ConnectionsConfig = read_yaml(config_path.to_str().unwrap()).unwrap();
 
     // setup mq
     let mut mq = MqClient::new();
