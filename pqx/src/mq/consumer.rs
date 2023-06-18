@@ -18,6 +18,8 @@ use tokio::sync::Mutex;
 
 use crate::error::{PqxError, PqxResult};
 
+use super::Retry;
+
 // ================================================================================================
 // PqxConsumer
 // ================================================================================================
@@ -90,6 +92,12 @@ where
     // Err(_) => handle_discard
     async fn consume(&mut self, content: &M) -> PqxResult<ConsumerResult<R>>;
 
+    // no need to override this method unless [`retry`] has been used in code,
+    #[allow(unused_variables)]
+    fn gen_retry(&self, message: &M) -> Retry {
+        unimplemented!()
+    }
+
     // ================================================================================================
     // default implementation
     //
@@ -98,19 +106,6 @@ where
 
     #[allow(unused_variables)]
     fn handle_props(&self, props: &BasicProperties) {}
-
-    // TODO: bad impl
-    #[allow(unused_variables)]
-    async fn retry(
-        &mut self,
-        channel: &Channel,
-        deliver: Deliver,
-        props: BasicProperties,
-        message: &M,
-        content: Vec<u8>,
-    ) -> PqxResult<()> {
-        Ok(())
-    }
 
     #[allow(unused_variables)]
     async fn success_callback(&mut self, message: &M, result: R) -> PqxResult<()> {
@@ -222,8 +217,11 @@ where
         // if callback failed, signal consume to false
         if let Err(_) = self.consumer().success_callback(message, result).await {
             self.signal_consume(false).await;
+            return;
         };
-        let _ = self.ack(channel, deliver).await;
+        if let Err(_) = self.ack(channel, deliver).await {
+            self.signal_consume(false).await;
+        };
     }
 
     async fn handle_requeue(
@@ -236,8 +234,11 @@ where
         // if callback failed, signal consume to false
         if let Err(_) = self.consumer().requeue_callback(message, result).await {
             self.signal_consume(false).await;
+            return;
         };
-        let _ = self.nack(channel, deliver, true).await;
+        if let Err(_) = self.nack(channel, deliver, true).await {
+            self.signal_consume(false).await;
+        };
     }
 
     async fn handle_retry(
@@ -251,19 +252,23 @@ where
     ) {
         if let Err(_) = self.consumer().retry_callback(message, result).await {
             self.signal_consume(false).await;
+            return;
         }
-        let _ = self
-            .consumer()
-            .retry(channel, deliver, props, message, content)
-            .await;
+        let retry = self.consumer().gen_retry(message);
+        if let Err(_) = retry.retry(channel, deliver, props, content).await {
+            self.signal_consume(false).await;
+        };
     }
 
     async fn handle_discard(&mut self, channel: &Channel, deliver: Deliver, error: PqxError) {
         // if callback failed, signal consume to false
         if let Err(_) = self.consumer().discard_callback(error).await {
             self.signal_consume(false).await;
+            return;
         };
-        let _ = self.nack(channel, deliver, false).await;
+        if let Err(_) = self.nack(channel, deliver, false).await {
+            self.signal_consume(false).await;
+        };
     }
 }
 

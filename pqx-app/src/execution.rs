@@ -6,8 +6,6 @@
 use std::process::ExitStatus;
 
 use async_trait::async_trait;
-use pqx::amqprs::channel::Channel;
-use pqx::amqprs::{BasicProperties, Deliver};
 use pqx::ec::CmdAsyncExecutor;
 use pqx::error::{PqxError, PqxResult};
 use pqx::mq::{Consumer, ConsumerResult, Retry};
@@ -71,25 +69,13 @@ impl Consumer<Command, ExitStatus> for Executor {
         Ok(res)
     }
 
-    async fn retry(
-        &mut self,
-        channel: &Channel,
-        deliver: Deliver,
-        props: BasicProperties,
-        message: &Command,
-        content: Vec<u8>,
-    ) -> PqxResult<()> {
-        let retry = Retry {
-            channel,
+    fn gen_retry(&self, message: &Command) -> Retry {
+        Retry {
             exchange: self.delayed_exchange.clone(),
             routing_key: String::from(""),
             poke: message.poke.unwrap_or(10000),
             retries: message.retry.unwrap_or(1),
-        };
-
-        retry.retry(deliver, props, content).await;
-
-        Ok(())
+        }
     }
 
     #[instrument]

@@ -221,16 +221,21 @@ impl<'a> FieldTableGetter<'a> {
 // Retry
 // ================================================================================================
 
-pub struct Retry<'a> {
-    pub channel: &'a Channel,
+pub struct Retry {
     pub exchange: String,
     pub routing_key: String,
     pub poke: u16,
     pub retries: u8,
 }
 
-impl<'a> Retry<'a> {
-    pub async fn retry(&self, deliver: Deliver, mut props: BasicProperties, content: Vec<u8>) {
+impl Retry {
+    pub async fn retry(
+        &self,
+        channel: &Channel,
+        deliver: Deliver,
+        mut props: BasicProperties,
+        content: Vec<u8>,
+    ) -> PqxResult<()> {
         // clone or create
         let mut headers = props.headers().cloned().unwrap_or(FieldTable::new());
 
@@ -252,28 +257,26 @@ impl<'a> Retry<'a> {
             headers.remove(&X_RETRIES);
             headers.insert(X_RETRIES.clone(), FieldValue::s(retries));
 
-            let _ = self
-                .channel
+            channel
                 .basic_publish(
                     props.with_headers(headers).finish(),
                     content,
                     BasicPublishArguments::new(&self.exchange, &self.routing_key),
                 )
-                .await;
+                .await?;
 
-            let _ = self
-                .channel
-                .basic_ack(BasicAckArguments::new(deliver.delivery_tag(), false));
+            let _ = channel.basic_ack(BasicAckArguments::new(deliver.delivery_tag(), false));
         } else {
             // discard message (if DLX is set, then goes to there)
-            let _ = self
-                .channel
+            channel
                 .basic_nack(BasicNackArguments::new(
                     deliver.delivery_tag(),
                     false,
                     false,
                 ))
-                .await;
+                .await?;
         }
+
+        Ok(())
     }
 }
