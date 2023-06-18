@@ -7,6 +7,7 @@ use chrono::Local;
 use pqx::amqprs::{FieldName, FieldTable, FieldValue};
 use pqx::ec::CmdArg;
 use pqx::error::PqxError;
+use pqx::mq::{X_DELAY, X_MESSAGE_TTL, X_RETRIES};
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
@@ -19,8 +20,8 @@ use crate::entities::{message_history, message_result};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Command {
     pub consumer_ids: Vec<String>,
-    pub retry: Option<usize>,
-    pub poke: Option<usize>,
+    pub retry: Option<u8>,
+    pub poke: Option<u16>,
     pub waiting_timeout: Option<usize>,
     pub consuming_timeout: Option<usize>,
     pub cmd: CmdArg,
@@ -50,24 +51,15 @@ impl<'a> TryFrom<&'a Command> for FieldTable {
         let mut ft = FieldTable::new();
 
         if let Some(r) = cmd.retry {
-            ft.insert(
-                FieldName::try_from("x-retry".to_string())?,
-                FieldValue::s(i16::try_from(r)?),
-            );
+            ft.insert(X_RETRIES.clone(), FieldValue::s(r.into()));
         }
 
         if let Some(p) = cmd.poke {
-            ft.insert(
-                FieldName::try_from("x-delay".to_string())?,
-                FieldValue::I(i32::try_from(p)?),
-            );
+            ft.insert(X_DELAY.clone(), FieldValue::I(p.into()));
         }
 
         if let Some(t) = cmd.waiting_timeout {
-            ft.insert(
-                FieldName::try_from("x-message-ttl".to_string())?,
-                FieldValue::l(i64::try_from(t)?),
-            );
+            ft.insert(X_MESSAGE_TTL.clone(), FieldValue::l(i64::try_from(t)?));
         }
 
         if let Some(t) = cmd.consuming_timeout {
@@ -111,8 +103,8 @@ impl TryFrom<message_history::Model> for Command {
                 .split(",")
                 .map(String::from)
                 .collect::<Vec<_>>(),
-            retry: m.retry.map(usize::try_from).transpose()?,
-            poke: m.poke.map(usize::try_from).transpose()?,
+            retry: m.retry.map(u8::try_from).transpose()?,
+            poke: m.poke.map(u16::try_from).transpose()?,
             waiting_timeout: m.waiting_timeout.map(usize::try_from).transpose()?,
             consuming_timeout: m.consuming_timeout.map(usize::try_from).transpose()?,
             cmd: serde_json::from_value(m.cmd)?,

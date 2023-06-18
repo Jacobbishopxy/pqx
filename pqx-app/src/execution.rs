@@ -6,9 +6,11 @@
 use std::process::ExitStatus;
 
 use async_trait::async_trait;
+use pqx::amqprs::channel::Channel;
+use pqx::amqprs::{BasicProperties, Deliver};
 use pqx::ec::CmdAsyncExecutor;
 use pqx::error::{PqxError, PqxResult};
-use pqx::mq::{Consumer, ConsumerResult};
+use pqx::mq::{Consumer, ConsumerResult, Retry};
 use pqx::pqx_util::now;
 use tracing::{debug, instrument};
 
@@ -21,6 +23,7 @@ use crate::persistence::MessagePersistent;
 
 #[derive(Clone)]
 pub struct Executor {
+    delayed_exchange: String,
     exec: CmdAsyncExecutor,
     persist: MessagePersistent,
 }
@@ -35,8 +38,9 @@ impl std::fmt::Debug for Executor {
 }
 
 impl Executor {
-    pub fn new(persist: MessagePersistent) -> Self {
+    pub fn new(delayed_exchange: impl Into<String>, persist: MessagePersistent) -> Self {
         Self {
+            delayed_exchange: delayed_exchange.into(),
             exec: CmdAsyncExecutor::new(),
             persist,
         }
@@ -59,11 +63,33 @@ impl Consumer<Command, ExitStatus> for Executor {
         let res = if es.success() {
             ConsumerResult::success(es)
         } else {
-            ConsumerResult::failure(es)
+            // instead of `Requeue`, use `Retry`
+            ConsumerResult::retry(es)
         };
         debug!("{} consumed result: {:?}", now!(), &res);
 
         Ok(res)
+    }
+
+    async fn retry(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        props: BasicProperties,
+        message: &Command,
+        content: Vec<u8>,
+    ) -> PqxResult<()> {
+        let retry = Retry {
+            channel,
+            exchange: self.delayed_exchange.clone(),
+            routing_key: String::from(""),
+            poke: message.poke.unwrap_or(10000),
+            retries: message.retry.unwrap_or(1),
+        };
+
+        retry.retry(deliver, props, content).await;
+
+        Ok(())
     }
 
     #[instrument]
@@ -80,15 +106,15 @@ impl Consumer<Command, ExitStatus> for Executor {
     }
 
     #[instrument]
-    async fn requeue_callback(&mut self, content: &Command, result: ExitStatus) -> PqxResult<()> {
+    async fn retry_callback(&mut self, content: &Command, result: ExitStatus) -> PqxResult<()> {
         let ec = result.code().unwrap_or(1);
         let er = ExecutionResult::new_with_result(ec, format!("{:?}", result));
 
         // persist message into db
         let id = self.persist.insert_history(content).await?;
-        debug!("{} requeue insert_history id: {}", now!(), id);
+        debug!("{} retry insert_history id: {}", now!(), id);
         let id = self.persist.insert_result(id, &er).await?;
-        debug!("{} requeue insert_result id: {}", now!(), id);
+        debug!("{} retry insert_result id: {}", now!(), id);
 
         Ok(())
     }

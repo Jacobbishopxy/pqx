@@ -10,7 +10,7 @@ use pqx::ec::util::*;
 use pqx::error::PqxResult;
 use pqx::mq::{MqClient, Subscriber};
 use pqx::pqx_util::{logging_init, now, read_yaml, PersistClient};
-use pqx_app::cfg::ConnectionsConfig;
+use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 use pqx_app::execution::Executor;
 use pqx_app::persistence::MessagePersistent;
 use tracing::{error, info, instrument};
@@ -22,6 +22,7 @@ use tracing::{error, info, instrument};
 const LOGGING_DIR: &str = ".";
 const FILENAME_PREFIX: &str = "pqx_subscriber";
 const CONN_CONFIG: &str = "conn.yml";
+const INIT_CONFIG: &str = "init.yml";
 
 // ================================================================================================
 // Helper
@@ -65,22 +66,27 @@ async fn main() {
 
     logging_init(LOGGING_DIR, FILENAME_PREFIX);
 
-    // read config
+    // read connection config
     let config_path = get_conn_yaml_path(CONN_CONFIG);
-    let config: ConnectionsConfig = read_yaml(config_path.to_str().unwrap()).unwrap();
+    let conn_config: ConnectionsConfig = read_yaml(config_path.to_str().unwrap()).unwrap();
+
+    // read setup config
+    let config_path = get_conn_yaml_path(INIT_CONFIG);
+    let config_path = config_path.to_string_lossy();
+    let init_config: InitiationsConfig = read_yaml(config_path).unwrap();
 
     // setup mq
     let mut mq = MqClient::new();
-    mq.connect(config.mq).await.unwrap();
+    mq.connect(conn_config.mq).await.unwrap();
     mq.open_channel(None).await.unwrap();
 
     // setup db
-    let mut ps = PersistClient::new(config.db);
+    let mut ps = PersistClient::new(conn_config.db);
     ps.connect().await.unwrap();
     let mp = MessagePersistent::new(ps.db.unwrap());
 
     // setup consumer
-    let mut consumer = Executor::new(mp);
+    let mut consumer = Executor::new(init_config.delayed_exchange, mp);
     consumer
         .exec_mut()
         .register_stdout_fn(Arc::new(logging_info))

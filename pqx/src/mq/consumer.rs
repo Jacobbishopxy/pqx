@@ -54,12 +54,17 @@ impl AsyncConsumer for PqxDefaultConsumer {
 #[derive(Debug)]
 pub enum ConsumerResult<R: Send + Debug> {
     Success(R),
+    Retry(R),
     Failure(R),
 }
 
 impl<R: Send + Debug> ConsumerResult<R> {
     pub fn success(r: R) -> Self {
         Self::Success(r)
+    }
+
+    pub fn retry(r: R) -> Self {
+        Self::Retry(r)
     }
 
     pub fn failure(r: R) -> Self {
@@ -80,6 +85,7 @@ where
 {
     // consumer behavior:
     // Ok(Success(R)) => handle_success
+    // Ok(Retry(R)) => handle_retry
     // Ok(Failure(R)) => handle_requeue
     // Err(_) => handle_discard
     async fn consume(&mut self, content: &M) -> PqxResult<ConsumerResult<R>>;
@@ -91,15 +97,33 @@ where
     // ================================================================================================
 
     #[allow(unused_variables)]
-    fn handle_props(&self, props: BasicProperties) {}
+    fn handle_props(&self, props: &BasicProperties) {}
 
+    // TODO: bad impl
     #[allow(unused_variables)]
-    async fn success_callback(&mut self, content: &M, result: R) -> PqxResult<()> {
+    async fn retry(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        props: BasicProperties,
+        message: &M,
+        content: Vec<u8>,
+    ) -> PqxResult<()> {
         Ok(())
     }
 
     #[allow(unused_variables)]
-    async fn requeue_callback(&mut self, content: &M, result: R) -> PqxResult<()> {
+    async fn success_callback(&mut self, message: &M, result: R) -> PqxResult<()> {
+        Ok(())
+    }
+
+    #[allow(unused_variables)]
+    async fn retry_callback(&mut self, message: &M, result: R) -> PqxResult<()> {
+        Ok(())
+    }
+
+    #[allow(unused_variables)]
+    async fn requeue_callback(&mut self, message: &M, result: R) -> PqxResult<()> {
         Ok(())
     }
 
@@ -186,6 +210,8 @@ where
         Ok(())
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
     async fn handle_success(
         &mut self,
         channel: &Channel,
@@ -212,6 +238,24 @@ where
             self.signal_consume(false).await;
         };
         let _ = self.nack(channel, deliver, true).await;
+    }
+
+    async fn handle_retry(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        props: BasicProperties,
+        content: Vec<u8>,
+        message: &M,
+        result: R,
+    ) {
+        if let Err(_) = self.consumer().retry_callback(message, result).await {
+            self.signal_consume(false).await;
+        }
+        let _ = self
+            .consumer()
+            .retry(channel, deliver, props, message, content)
+            .await;
     }
 
     async fn handle_discard(&mut self, channel: &Channel, deliver: Deliver, error: PqxError) {
@@ -247,13 +291,17 @@ where
         };
 
         // handle props
-        self.consumer().handle_props(basic_properties);
+        self.consumer().handle_props(&basic_properties);
         // future result
         let fut_res = self.consumer().consume(&msg).await;
 
         // according to biz logic determine whether responds Ack/Requeue/Discard
         match fut_res {
             Ok(ConsumerResult::Success(r)) => self.handle_success(channel, deliver, &msg, r).await,
+            Ok(ConsumerResult::Retry(r)) => {
+                self.handle_retry(channel, deliver, basic_properties, content, &msg, r)
+                    .await
+            }
             Ok(ConsumerResult::Failure(r)) => self.handle_requeue(channel, deliver, &msg, r).await,
             Err(e) => self.handle_discard(channel, deliver, e).await,
         };

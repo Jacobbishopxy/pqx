@@ -18,13 +18,15 @@ use crate::error::{PqxError, PqxResult};
 // const
 // ================================================================================================
 
+pub static X_DELAYED_MESSAGE: Lazy<ExchangeType> =
+    Lazy::new(|| ExchangeType::Plugin(String::from("x-delayed-message")));
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 pub static X_DELAYED_TYPE: Lazy<FieldName> =
     Lazy::new(|| FieldName::try_from("x-delayed-type").unwrap());
 
 pub static X_DELAY: Lazy<FieldName> = Lazy::new(|| FieldName::try_from("x-delay").unwrap());
-
-pub static X_DELAYED_MESSAGE: Lazy<ExchangeType> =
-    Lazy::new(|| ExchangeType::Plugin(String::from("x-delayed-message")));
 
 pub static X_RETRIES: Lazy<FieldName> =
     Lazy::new(|| FieldName::try_from(String::from("x-retries")).unwrap());
