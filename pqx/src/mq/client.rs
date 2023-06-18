@@ -12,7 +12,7 @@ use amqprs::FieldTable;
 use pqx_util::{read_json, read_yaml};
 use serde::{Deserialize, Serialize};
 
-use super::{get_channel, get_connection, FieldTableBuilder, DELAYED_EXCHANGE};
+use super::{get_channel, get_connection, FieldTableBuilder, X_DELAYED_MESSAGE};
 use crate::error::PqxResult;
 
 // ================================================================================================
