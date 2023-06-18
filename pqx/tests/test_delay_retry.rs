@@ -209,7 +209,7 @@ async fn declare_exchanges_and_queue_success() {
     assert!(res.is_ok());
 
     // 1. declare a normal exchange
-    let res = client.declare_exchange(EXCHG, ExchangeType::Direct).await;
+    let res = client.declare_exchange(EXCHG, &ExchangeType::Direct).await;
     assert!(res.is_ok());
 
     // 2. declare `x-delayed-message` exchange (needs plugin's support)

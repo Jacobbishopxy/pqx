@@ -145,7 +145,7 @@ async fn mq_subscriber_success() {
     assert!(res.is_ok());
 
     // 3. declare exchange & queue
-    let res = client.declare_exchange(EXCHG, ExchangeType::Direct).await;
+    let res = client.declare_exchange(EXCHG, &ExchangeType::Direct).await;
     assert!(res.is_ok());
     let res = client.declare_and_bind_queue(EXCHG, ROUT, QUE).await;
     assert!(res.is_ok());

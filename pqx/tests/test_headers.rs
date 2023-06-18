@@ -96,7 +96,7 @@ async fn declare_exchange_and_queues() {
     assert!(res.is_ok());
 
     // 1. declare exchange
-    let res = client.declare_exchange(EXCHG, ExchangeType::Headers).await;
+    let res = client.declare_exchange(EXCHG, &ExchangeType::Headers).await;
     assert!(res.is_ok());
 
     // 2. declare and bind queues

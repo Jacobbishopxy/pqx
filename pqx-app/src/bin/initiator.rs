@@ -49,7 +49,7 @@ async fn declare_exchange_and_queues_then_bind(
 ) -> PqxResult<()> {
     // declare queues
     client
-        .declare_exchange(&config.exchange, ExchangeType::Headers)
+        .declare_exchange(&config.exchange, &ExchangeType::Headers)
         .await?;
 
     // declare queues and bind to exchange
@@ -76,7 +76,7 @@ async fn declare_delayed_exchange_and_bind_queues(
 ) -> PqxResult<()> {
     // declare delayed exchange
     client
-        .declare_delayed_exchange(&config.delayed_exchange)
+        .declare_exchange(&config.delayed_exchange, &ExchangeType::Headers)
         .await?;
 
     // bind existing queues to delayed exchange (suppose queue has already been declared in the former step)
@@ -95,7 +95,7 @@ async fn declare_dead_letter_exchange_and_bind_queues(
 ) -> PqxResult<()> {
     // declare dead letter exchange
     client
-        .declare_dead_letter_exchange(&config.dead_letter_exchange)
+        .declare_exchange(&config.dead_letter_exchange, &ExchangeType::Direct)
         .await?;
 
     // bind existing queues to dead letter exchange (suppose queue has already been declared in the former step)

@@ -116,7 +116,7 @@ async fn declare_dlx_success() {
     assert!(res.is_ok());
 
     // 1. declare an exchange for dead letter
-    let res = client.declare_exchange(DLX, ExchangeType::Direct).await;
+    let res = client.declare_exchange(DLX, &ExchangeType::Direct).await;
     assert!(res.is_ok());
 
     // 2. declare a queue and bind to the dead letter exchange
@@ -138,7 +138,7 @@ async fn mq_subscribe_success() {
     assert!(res.is_ok());
 
     // 1. declare a normal exchange
-    let res = client.declare_exchange(EXCHG, ExchangeType::Direct).await;
+    let res = client.declare_exchange(EXCHG, &ExchangeType::Direct).await;
     assert!(res.is_ok());
     let chan = client.channel().unwrap();
 
