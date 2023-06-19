@@ -47,6 +47,7 @@ pub static X_DEAD_ROUTING_KEY: Lazy<FieldName> =
 // ================================================================================================
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum MatchType {
     Any,
     All,

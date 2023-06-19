@@ -49,7 +49,7 @@ async fn declare_exchange_and_queues_then_bind(
 ) -> PqxResult<()> {
     // declare queues
     client
-        .declare_exchange(&config.exchange, &ExchangeType::Headers)
+        .declare_exchange(&config.header_exchange, &ExchangeType::Headers)
         .await?;
 
     // declare queues and bind to exchange
@@ -57,11 +57,11 @@ async fn declare_exchange_and_queues_then_bind(
         // declare queue
         client.declare_queue(&hq.queue).await?;
         // bind queue to exchange
-        let mut args = QueueBindArguments::new(&hq.queue, &config.exchange, "");
+        let mut args = QueueBindArguments::new(&hq.queue, &config.header_exchange, "");
         let mut headers = FieldTableBuilder::new();
         headers.x_match(&hq.match_type);
-        for kv in hq.kv.iter() {
-            headers.x_common_pair(kv.key.clone(), kv.value.clone());
+        for (k, v) in hq.kv.iter() {
+            headers.x_common_pair(k.clone(), v.clone());
         }
         args.arguments(headers.finish());
         client.bind_queue_by_args(args).await?;

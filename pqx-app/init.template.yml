@@ -1,0 +1,16 @@
+# @author:	Jacob Xie
+# @date:	2023/06/19 10:05:36 Monday
+# @brief:
+
+header_exchange: "pqx.dev.header"
+delayed_exchange: "pqx.dev.delayed"
+dead_letter_exchange: "pqx.dev.dlx"
+header_queues:
+  - header_queue:
+    queue: "h1"
+    match_type: any
+    kv: { unique_key: h1, common_key: dev }
+  - header_queue:
+    queue: "h2"
+    match_type: any
+    kv: { unique_key: h2, common_key: dev }

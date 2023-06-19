@@ -73,8 +73,8 @@ impl Consumer<Command, ExitStatus> for Executor {
         Retry {
             exchange: self.delayed_exchange.clone(),
             routing_key: String::from(""),
-            poke: message.poke.unwrap_or(10000),
-            retries: message.retry.unwrap_or(1),
+            poke: message.poke.unwrap_or(10000), // default 10s
+            retries: message.retry.unwrap_or(1), // default retry once
         }
     }
 
