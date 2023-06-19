@@ -8,8 +8,9 @@ use pqx::amqprs::channel::{ExchangeType, QueueBindArguments};
 use pqx::ec::util::*;
 use pqx::error::PqxResult;
 use pqx::mq::{FieldTableBuilder, MqClient};
-use pqx::pqx_util::{logging_init, read_yaml};
+use pqx::pqx_util::{logging_init, read_yaml, PersistClient};
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
+use pqx_app::persistence::MessagePersistent;
 
 // ================================================================================================
 // Const
@@ -115,10 +116,28 @@ async fn declare_dead_letter_exchange_and_bind_queues(
     Ok(())
 }
 
+async fn create_table(client: &PersistClient) -> PqxResult<()> {
+    let db = client.db().expect("connection is established");
+    let mp = MessagePersistent::new(db.clone());
+
+    mp.create_table().await?;
+
+    Ok(())
+}
+
 // ================================================================================================
 // Main
 // ================================================================================================
 
+/// Main
+///
+/// 1. cargo run --bin initiator -- -o decl_x
+/// 2. cargo run --bin initiator -- -o decl_dx
+/// 3. cargo run --bin initiator -- -o decl_dlx
+/// 4. cargo run --bin initiator -- -o decl_all
+/// 5. cargo run --bin initiator -- -o crt_tbl
+/// 6. cargo run --bin initiator -- -o all
+///
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
     let args = Args::parse();
@@ -129,9 +148,14 @@ async fn main() {
     let config_path = get_conn_yaml_path(CONN_CONFIG);
     let config_path = config_path.to_string_lossy();
     let config: ConnectionsConfig = read_yaml(config_path).unwrap();
-    let mut client = MqClient::new();
-    client.connect(config.mq).await.unwrap();
-    client.open_channel(None).await.unwrap();
+
+    // mq client
+    let mut mq_client = MqClient::new();
+    mq_client.connect(config.mq).await.unwrap();
+    mq_client.open_channel(None).await.unwrap();
+    // db client
+    let mut db_client = PersistClient::new(config.db);
+    db_client.connect().await.unwrap();
 
     // read setup config
     let config_path = get_conn_yaml_path(INIT_CONFIG);
@@ -139,25 +163,27 @@ async fn main() {
     let config: InitiationsConfig = read_yaml(config_path).unwrap();
 
     match args.option.as_str() {
-        "decl_x" => declare_exchange_and_queues_then_bind(&client, &config)
+        "decl_x" => declare_exchange_and_queues_then_bind(&mq_client, &config)
             .await
             .unwrap(),
-        "decl_dx" => declare_delayed_exchange_and_bind_queues(&client, &config)
+        "decl_dx" => declare_delayed_exchange_and_bind_queues(&mq_client, &config)
             .await
             .unwrap(),
-        "decl_dlx" => declare_dead_letter_exchange_and_bind_queues(&client, &config)
+        "decl_dlx" => declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
             .await
             .unwrap(),
-        "all" => {
-            declare_exchange_and_queues_then_bind(&client, &config)
+        "crt_tbl" => create_table(&db_client).await.unwrap(),
+        "decl_all" => {
+            declare_exchange_and_queues_then_bind(&mq_client, &config)
                 .await
                 .unwrap();
-            declare_delayed_exchange_and_bind_queues(&client, &config)
+            declare_delayed_exchange_and_bind_queues(&mq_client, &config)
                 .await
                 .unwrap();
-            declare_dead_letter_exchange_and_bind_queues(&client, &config)
+            declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
                 .await
                 .unwrap();
+            create_table(&db_client).await.unwrap();
         }
         _ => panic!("undefined option"),
     }
