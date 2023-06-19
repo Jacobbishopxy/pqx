@@ -15,7 +15,7 @@ use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 // Const
 // ================================================================================================
 
-const LOGGING_DIR: &str = ".";
+const LOGGING_DIR: &str = "./logs";
 const FILENAME_PREFIX: &str = "pqx_initiator";
 const CONN_CONFIG: &str = "conn.yml";
 const INIT_CONFIG: &str = "init.yml";
@@ -61,9 +61,10 @@ async fn declare_exchange_and_queues_then_bind(
         let mut headers = FieldTableBuilder::new();
         headers.x_match(&hq.match_type);
         for (k, v) in hq.kv.iter() {
-            headers.x_common_pair(k.clone(), v.clone());
+            headers.x_common_pair(k, v);
         }
         args.arguments(headers.finish());
+
         client.bind_queue_by_args(args).await?;
     }
 
@@ -81,9 +82,15 @@ async fn declare_delayed_exchange_and_bind_queues(
 
     // bind existing queues to delayed exchange (suppose queue has already been declared in the former step)
     for hq in &config.header_queues {
-        client
-            .bind_queue(&config.delayed_exchange, "", &hq.queue)
-            .await?;
+        let mut args = QueueBindArguments::new(&hq.queue, &config.delayed_exchange, "");
+        let mut headers = FieldTableBuilder::new();
+        headers.x_match(&hq.match_type);
+        for (k, v) in hq.kv.iter() {
+            headers.x_common_pair(k, v);
+        }
+        args.arguments(headers.finish());
+
+        client.bind_queue_by_args(args).await?;
     }
 
     Ok(())
@@ -124,6 +131,7 @@ async fn main() {
     let config: ConnectionsConfig = read_yaml(config_path).unwrap();
     let mut client = MqClient::new();
     client.connect(config.mq).await.unwrap();
+    client.open_channel(None).await.unwrap();
 
     // read setup config
     let config_path = get_conn_yaml_path(INIT_CONFIG);
