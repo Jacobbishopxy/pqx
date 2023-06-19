@@ -92,7 +92,7 @@ where
     // Err(_) => handle_discard
     async fn consume(&mut self, content: &M) -> PqxResult<ConsumerResult<R>>;
 
-    // no need to override this method unless [`retry`] has been used in code,
+    // [IMPORTANT] no need to override this method unless [`retry`] has been used in code,
     #[allow(unused_variables)]
     fn gen_retry(&self, message: &M) -> Retry {
         unimplemented!()

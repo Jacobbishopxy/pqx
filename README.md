@@ -2,6 +2,10 @@
 
 PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system, and serves as a subscriber for receiving messages and execute related commands.
 
+PS:
+
+1. Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail;
+
 ## Project Structure
 
 - `pqx-util`: util functions

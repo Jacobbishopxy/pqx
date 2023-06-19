@@ -87,6 +87,7 @@ macro_rules! impl_set_consumer_priorities {
     };
 }
 
+// Starting with RabbitMQ 3.12, the timeout value can also be configured per-queue.
 macro_rules! impl_set_consumer_timeout {
     () => {
         pub async fn set_consumer_timeout(&mut self, timeout: u32) -> crate::error::PqxResult<()> {

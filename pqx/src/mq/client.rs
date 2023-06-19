@@ -164,11 +164,9 @@ impl MqClient {
     ) -> PqxResult<()> {
         let chan = get_channel!(self)?;
 
-        chan.exchange_declare(ExchangeDeclareArguments::new(
-            name,
-            &exchange_type.to_string(),
-        ))
-        .await?;
+        let mut args = ExchangeDeclareArguments::new(name, &exchange_type.to_string());
+        args.durable(true);
+        chan.exchange_declare(args.finish()).await?;
 
         Ok(())
     }
@@ -195,6 +193,7 @@ impl MqClient {
         let chan = get_channel!(self)?;
 
         let exchange_args = ExchangeDeclareArguments::new(name, &exchange_type.to_string())
+            .durable(true)
             .arguments(args)
             .finish();
 

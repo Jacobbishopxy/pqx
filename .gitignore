@@ -11,6 +11,7 @@ target/
 .vscode
 
 Catalog.md
+logs/
 pqx/conn.yml
 mq-api/conn.yml
 pqx/log
