@@ -16,6 +16,15 @@ use pqx_app::persistence::MessagePersistent;
 // Const
 // ================================================================================================
 
+// commands
+const INSP: &str = "insp";
+const DECL_X: &str = "decl_x";
+const DECL_DX: &str = "decl_dx";
+const DECL_DLX: &str = "decl_dlx";
+const CRT_TBL: &str = "crt_tbl";
+const DECL_ALL: &str = "decl_all";
+
+// default constants
 const LOGGING_DIR: &str = "./logs";
 const FILENAME_PREFIX: &str = "pqx_initiator";
 const CONN_CONFIG: &str = "conn.yml";
@@ -123,6 +132,7 @@ async fn create_table(client: &PersistClient) -> PqxResult<()> {
 
 /// Main
 ///
+/// 0. cargo run --bin initiator -- -o insp
 /// 1. cargo run --bin initiator -- -o decl_x
 /// 2. cargo run --bin initiator -- -o decl_dx
 /// 3. cargo run --bin initiator -- -o decl_dlx
@@ -155,17 +165,22 @@ async fn main() {
     let config: InitiationsConfig = read_yaml(config_path).unwrap();
 
     match args.option.as_str() {
-        "decl_x" => declare_exchange_and_queues_then_bind(&mq_client, &config)
+        INSP => {
+            // TODO:
+            // check tables exist
+            // check exchanges and queues exist
+        }
+        DECL_X => declare_exchange_and_queues_then_bind(&mq_client, &config)
             .await
             .unwrap(),
-        "decl_dx" => declare_delayed_exchange_and_bind_queues(&mq_client, &config)
+        DECL_DX => declare_delayed_exchange_and_bind_queues(&mq_client, &config)
             .await
             .unwrap(),
-        "decl_dlx" => declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
+        DECL_DLX => declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
             .await
             .unwrap(),
-        "crt_tbl" => create_table(&db_client).await.unwrap(),
-        "decl_all" => {
+        CRT_TBL => create_table(&db_client).await.unwrap(),
+        DECL_ALL => {
             declare_exchange_and_queues_then_bind(&mq_client, &config)
                 .await
                 .unwrap();

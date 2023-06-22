@@ -37,6 +37,19 @@ async fn connection_success() {
 }
 
 #[tokio::test]
+async fn check_exists_success() {
+    let conn = CONN.clone();
+    let mut db = PersistClient::new(conn);
+    let _ = db.connect().await;
+
+    let mp = MessagePersistent::new(db.db.unwrap());
+
+    let res = mp.check_existence().await;
+    assert!(res.is_ok());
+    println!("{:?}", res.unwrap());
+}
+
+#[tokio::test]
 async fn create_table_success() {
     let conn = CONN.clone();
     let mut db = PersistClient::new(conn);
@@ -112,5 +125,18 @@ async fn find_by_pagination_success() {
     let res = mp.find_by_pagination(0, 10).await;
     assert!(res.is_ok());
     let res = res.unwrap();
+    println!("res: {:?}", res);
+}
+
+#[tokio::test]
+async fn drop_tables_success() {
+    let conn = CONN.clone();
+    let mut db = PersistClient::new(conn);
+    let _ = db.connect().await;
+
+    let mp = MessagePersistent::new(db.db.unwrap());
+
+    let res = mp.drop_table().await;
+    assert!(res.is_ok());
     println!("res: {:?}", res);
 }

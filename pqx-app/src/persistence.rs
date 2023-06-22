@@ -5,16 +5,41 @@
 
 use pqx::error::{PqxError, PqxResult};
 use pqx::pqx_util::PqxUtilError;
+use sea_orm::sea_query::*;
 use sea_orm::*;
 
 use crate::adt::{Command, ExecutionResult};
 use crate::entities::{message_history, message_result};
 
 // ================================================================================================
-// types
+// const & types
 // ================================================================================================
 
+const MR: &str = "message_result";
+const MH: &str = "message_history";
+
 pub type MessageHistoryAndResult = (Command, Option<ExecutionResult>);
+
+// ================================================================================================
+// helper
+// ================================================================================================
+
+fn gen_check_table_exists_stmt(table_name: &str) -> SelectStatement {
+    let cond = Cond::all()
+        .add(Expr::col(Alias::new("schemaname")).eq("public"))
+        .add(Expr::col(Alias::new("tablename")).eq(table_name));
+
+    let expr = Expr::exists(
+        Query::select()
+            .from(Alias::new("pg_tables"))
+            .cond_where(cond)
+            .to_owned(),
+    );
+
+    Query::select()
+        .expr_as(expr, Alias::new("exists"))
+        .to_owned()
+}
 
 // ================================================================================================
 // MessagePersistent
@@ -30,6 +55,34 @@ impl<'a> MessagePersistent {
         Self { db }
     }
 
+    pub async fn check_existence(&self) -> PqxResult<(bool, bool)> {
+        let builder = self.db.get_database_backend();
+
+        let stmt = gen_check_table_exists_stmt(MH);
+        let stmt = builder.build(&stmt);
+
+        let res = self
+            .db
+            .query_one(stmt)
+            .await
+            .map_err(PqxUtilError::SeaOrm)?
+            .ok_or::<PqxError>("query failed".into())?;
+        let res1: bool = res.try_get("", "exists").map_err(PqxUtilError::SeaOrm)?;
+
+        let stmt = gen_check_table_exists_stmt(MR);
+        let stmt = builder.build(&stmt);
+
+        let res = self
+            .db
+            .query_one(stmt)
+            .await
+            .map_err(PqxUtilError::SeaOrm)?
+            .ok_or::<PqxError>("query failed".into())?;
+        let res2: bool = res.try_get("", "exists").map_err(PqxUtilError::SeaOrm)?;
+
+        Ok((res1, res2))
+    }
+
     pub async fn create_table(&self) -> PqxResult<()> {
         let builder = self.db.get_database_backend();
         let schema = Schema::new(builder);
@@ -40,6 +93,22 @@ impl<'a> MessagePersistent {
 
         // create message_result table
         let stmt = builder.build(&schema.create_table_from_entity(message_result::Entity));
+        self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
+
+        Ok(())
+    }
+
+    pub async fn drop_table(&self) -> PqxResult<()> {
+        let builder = self.db.get_database_backend();
+
+        // drop `message_result`
+        let stmt = Table::drop().table(Alias::new(MR)).to_owned();
+        let stmt = builder.build(&stmt);
+        self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
+
+        // drop `message_history`
+        let stmt = Table::drop().table(Alias::new(MH)).to_owned();
+        let stmt = builder.build(&stmt);
         self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
 
         Ok(())
