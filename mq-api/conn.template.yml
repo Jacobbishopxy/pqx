@@ -6,3 +6,4 @@ host: http://localhost
 port: 15672
 path: api
 auth: Basic YWRtaW46YWRtaW4=
+vhost: devhost

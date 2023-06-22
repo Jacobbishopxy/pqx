@@ -17,6 +17,20 @@ pub(crate) mod helpers {
             }
         };
     }
+
+    macro_rules! impl_get_with_vhost {
+        ($method_name:ident, $path:expr) => {
+            ::paste::paste! {
+                pub async fn [<$method_name _with_vhost>](
+                    &self,
+                    vhost: &str,
+                ) -> crate::error::MqApiResult<::serde_json::Value> {
+                    let p = format!("{}/{}", $path, vhost);
+                    self.client.get::<_, ::serde_json::Value>(p).await
+                }
+            }
+        };
+    }
 }
 
 pub mod client;

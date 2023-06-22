@@ -1082,6 +1082,7 @@ name = "mq-api"
 version = "0.1.0"
 dependencies = [
  "once_cell",
+ "paste",
  "pqx-util",
  "reqwest",
  "serde",

@@ -22,6 +22,7 @@ pub struct MqClientCfg {
     port: usize,
     path: Option<String>,
     auth: Option<String>,
+    vhost: Option<String>,
 }
 
 // ================================================================================================
@@ -31,18 +32,20 @@ pub struct MqClientCfg {
 #[derive(Debug)]
 pub struct MqClient {
     url: String,
+    vhost: String,
     client: reqwest::Client,
 }
 
 impl MqClient {
-    pub fn new(url: &str) -> Self {
+    pub fn new(url: &str, vhost: &str) -> Self {
         Self {
             url: url.to_owned(),
+            vhost: vhost.to_owned(),
             client: ClientBuilder::new().build().expect("build success"),
         }
     }
 
-    pub fn new_with_headers(url: &str, headers: HeaderMap) -> Self {
+    pub fn new_with_headers(url: &str, vhost: &str, headers: HeaderMap) -> Self {
         let c = ClientBuilder::new()
             .default_headers(headers)
             .build()
@@ -50,6 +53,7 @@ impl MqClient {
 
         Self {
             url: url.to_owned(),
+            vhost: vhost.to_owned(),
             client: c,
         }
     }
@@ -75,7 +79,11 @@ impl MqClient {
             None => url,
         };
 
-        Ok(Self { url, client: c })
+        Ok(Self {
+            url,
+            vhost: cfg.vhost.unwrap_or(String::from("")),
+            client: c,
+        })
     }
 
     pub fn new_by_json(path: impl AsRef<str>) -> MqApiResult<Self> {
@@ -99,7 +107,15 @@ impl MqClient {
             None => url,
         };
 
-        Ok(Self { url, client: c })
+        Ok(Self {
+            url,
+            vhost: cfg.vhost.unwrap_or(String::from("")),
+            client: c,
+        })
+    }
+
+    pub fn vhost(&self) -> &str {
+        self.vhost.as_ref()
     }
 
     pub async fn get<P: AsRef<str>, R: DeserializeOwned>(&self, path: P) -> MqApiResult<R> {
@@ -184,7 +200,7 @@ mod test_client {
     async fn simple_get() {
         let hm = HEADER.clone();
 
-        let client = MqClient::new_with_headers("http://localhost:15672/api", hm);
+        let client = MqClient::new_with_headers("http://localhost:15672/api", "", hm);
 
         let res = client.get::<_, serde_json::Value>("overview").await;
         assert!(res.is_ok());

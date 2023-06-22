@@ -40,6 +40,11 @@ impl<'a> MqQuery<'a> {
     impl_simple_get!(parameters, "parameters");
     impl_simple_get!(policies, "policies");
     impl_simple_get!(auth, "auth");
+
+    impl_get_with_vhost!(exchanges, "exchanges");
+    impl_get_with_vhost!(queues, "queues");
+    impl_get_with_vhost!(bindings, "bindings");
+    impl_get_with_vhost!(policies, "policies");
 }
 
 // ================================================================================================
@@ -59,9 +64,9 @@ mod test_query {
     async fn overview_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.overview().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.overview().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -69,9 +74,9 @@ mod test_query {
     async fn connections_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.connections().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.connections().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -79,9 +84,9 @@ mod test_query {
     async fn channels_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.channels().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.channels().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -89,9 +94,9 @@ mod test_query {
     async fn consumers_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.consumers().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.consumers().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -99,9 +104,9 @@ mod test_query {
     async fn exchanges_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.exchanges().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.exchanges().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -109,9 +114,9 @@ mod test_query {
     async fn queues_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.queues().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.queues().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -119,9 +124,9 @@ mod test_query {
     async fn bindings_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.bindings().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.bindings().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -129,9 +134,9 @@ mod test_query {
     async fn vhosts_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.vhosts().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.vhosts().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -139,9 +144,9 @@ mod test_query {
     async fn users_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.users().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.users().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -149,9 +154,9 @@ mod test_query {
     async fn whoami_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.whoami().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.whoami().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -159,9 +164,9 @@ mod test_query {
     async fn parameters_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.parameters().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.parameters().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -169,9 +174,9 @@ mod test_query {
     async fn policies_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.policies().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.policies().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 
@@ -179,9 +184,51 @@ mod test_query {
     async fn auth_success() {
         let query = MqQuery::new(&CLIENT);
 
-        let overview = query.auth().await;
-        assert!(overview.is_ok());
-        let pretty_json = serde_json::to_string_pretty(&overview.unwrap()).unwrap();
+        let res = query.auth().await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
+        println!("{}", pretty_json);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    #[tokio::test]
+    async fn exchanges_with_vhost_success() {
+        let query = MqQuery::new(&CLIENT);
+
+        let res = query.exchanges_with_vhost(&CLIENT.vhost()).await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
+        println!("{}", pretty_json);
+    }
+
+    #[tokio::test]
+    async fn queues_with_vhost_success() {
+        let query = MqQuery::new(&CLIENT);
+
+        let res = query.queues_with_vhost(&CLIENT.vhost()).await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
+        println!("{}", pretty_json);
+    }
+
+    #[tokio::test]
+    async fn bindings_with_vhost_success() {
+        let query = MqQuery::new(&CLIENT);
+
+        let res = query.bindings_with_vhost(&CLIENT.vhost()).await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
+        println!("{}", pretty_json);
+    }
+
+    #[tokio::test]
+    async fn policies_with_vhost_success() {
+        let query = MqQuery::new(&CLIENT);
+
+        let res = query.policies_with_vhost(&CLIENT.vhost()).await;
+        assert!(res.is_ok());
+        let pretty_json = serde_json::to_string_pretty(&res.unwrap()).unwrap();
         println!("{}", pretty_json);
     }
 }
