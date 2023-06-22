@@ -1,10 +1,10 @@
 <mxfile host="65bd71144e">
     <diagram id="LXRP24agHynsKWVxxbwd" name="Page-1">
-        <mxGraphModel dx="896" dy="788" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="761" dy="554" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="18" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" edge="1" parent="1" source="2" target="15">
+                <mxCell id="18" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" parent="1" source="2" target="15" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="170" y="260"/>
@@ -12,7 +12,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" edge="1" parent="1" source="2" target="14">
+                <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" parent="1" source="2" target="14" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="170" y="260"/>
@@ -20,13 +20,13 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="2" value="Exchange" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;sketch=1;curveFitting=1;jiggle=2;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="2" value="Exchange" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;sketch=1;curveFitting=1;jiggle=2;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="100" y="140" width="140" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="4" value="PostgreSQL&lt;br&gt;(msg status)" style="shape=datastore;whiteSpace=wrap;html=1;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
-                    <mxGeometry x="245" y="600" width="100" height="80" as="geometry"/>
+                <mxCell id="4" value="PostgreSQL&lt;br&gt;(msg status)" style="shape=datastore;whiteSpace=wrap;html=1;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
+                    <mxGeometry x="245" y="623" width="100" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;dashed=1;" edge="1" parent="1" source="11" target="4">
+                <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;dashed=1;" parent="1" source="11" target="4" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="220" y="480"/>
@@ -35,12 +35,12 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="24" value="Success" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Comic Sans MS;" vertex="1" connectable="0" parent="23">
+                <mxCell id="24" value="Success" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Comic Sans MS;" parent="23" vertex="1" connectable="0">
                     <mxGeometry x="-0.4275" relative="1" as="geometry">
                         <mxPoint y="24" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="28" value="Retry&lt;br&gt;&amp;lt; Max(Retries)" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0;entryDx=0;entryDy=30;entryPerimeter=0;fontFamily=Comic Sans MS;" edge="1" parent="1" source="11" target="25">
+                <mxCell id="28" value="Retry&lt;br&gt;&amp;lt; Max(Retries)" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0;entryDx=0;entryDy=30;entryPerimeter=0;fontFamily=Comic Sans MS;" parent="1" source="11" target="25" edge="1">
                     <mxGeometry x="-0.5467" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="360" y="480"/>
@@ -49,16 +49,16 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="31" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;dashed=1;" edge="1" parent="1" source="11" target="4">
-                    <mxGeometry x="-0.1323" y="20" relative="1" as="geometry">
+                <mxCell id="31" value="Status Recording" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Comic Sans MS;dashed=1;" parent="1" source="11" target="4" edge="1">
+                    <mxGeometry x="0.626" relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="295" y="610"/>
-                            <mxPoint x="295" y="610"/>
+                            <mxPoint x="295" y="560"/>
+                            <mxPoint x="295" y="560"/>
                         </Array>
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="32" value="Failure&lt;br&gt;&amp;gt; Max(Retries)" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0;entryDx=0;entryDy=30;entryPerimeter=0;fontFamily=Comic Sans MS;" edge="1" parent="1" source="11" target="26">
+                <mxCell id="32" value="Failure&lt;br&gt;&amp;gt; Max(Retries)" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0;entryDx=0;entryDy=30;entryPerimeter=0;fontFamily=Comic Sans MS;" parent="1" source="11" target="26" edge="1">
                     <mxGeometry x="-0.7068" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="295" y="540"/>
@@ -68,31 +68,31 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="11" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.flowchart.summing_function;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="11" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.flowchart.summing_function;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="275" y="460" width="40" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Comic Sans MS;" edge="1" parent="1" source="14" target="11">
+                <mxCell id="22" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Comic Sans MS;" parent="1" source="14" target="11" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="14" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="14" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="270" y="290" width="50" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="15" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="15" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="30" y="290" width="50" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="30" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" edge="1" parent="1" source="25" target="27">
+                <mxCell id="30" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" parent="1" source="25" target="27" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="25" value="Delay Message Exchange" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;sketch=1;curveFitting=1;jiggle=2;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="25" value="Delay Message Exchange" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;sketch=1;curveFitting=1;jiggle=2;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="382" y="140" width="140" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="34" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" edge="1" parent="1" source="26" target="33">
+                <mxCell id="34" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" parent="1" source="26" target="33" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="26" value="Dead Letter Exchange" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;sketch=1;curveFitting=1;jiggle=2;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="26" value="Dead Letter Exchange" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;sketch=1;curveFitting=1;jiggle=2;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="601" y="140" width="140" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="29" value="Delay" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" edge="1" parent="1" source="27" target="14">
+                <mxCell id="29" value="Delay" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;" parent="1" source="27" target="14" edge="1">
                     <mxGeometry x="-0.9378" relative="1" as="geometry">
                         <mxPoint x="440" y="460" as="targetPoint"/>
                         <Array as="points">
@@ -104,10 +104,10 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="27" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="27" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="427" y="290" width="50" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="Recover" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;dashed=1;" edge="1" parent="1" source="33" target="14">
+                <mxCell id="35" value="Recover" style="edgeStyle=orthogonalEdgeStyle;html=1;fontFamily=Comic Sans MS;dashed=1;" parent="1" source="33" target="14" edge="1">
                     <mxGeometry x="-0.9522" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="671" y="480"/>
@@ -118,10 +118,10 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="33" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="33" value="" style="verticalLabelPosition=bottom;dashed=0;shadow=0;html=1;align=center;verticalAlign=top;shape=mxgraph.cabinets.distribution_block_4p_125a_11_connections_2;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="646" y="290" width="50" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="39" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.flowchart.parallel_mode;pointerEvents=1;sketch=1;fontFamily=Comic Sans MS;" vertex="1" parent="1">
+                <mxCell id="39" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.flowchart.parallel_mode;pointerEvents=1;sketch=1;fontFamily=Comic Sans MS;" parent="1" vertex="1">
                     <mxGeometry x="130" y="340" width="95" height="40" as="geometry"/>
                 </mxCell>
             </root>

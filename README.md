@@ -54,6 +54,7 @@ PS:
 │       │   ├── message_result.rs
 │       │   └── mod.rs
 │       ├── adt.rs
+│       ├── cfg.rs
 │       ├── execution.rs
 │       ├── lib.rs
 │       └── persistence.rs
@@ -67,17 +68,25 @@ PS:
 └── LICENSE
 ```
 
-## Pqx Application
+## Message flow (Pqx-app)
 
 ![app](./app.svg)
 
 ## Quick startup
+
+### Tests
 
 1. Build image for RabbitMQ (including plugins): `make facilities-build`
 
 1. Make sure RabbitMQ and PostgreSQL has been started, simply by executing `make facilities-start`. Check [docker-compose](./docker/facilities/docker-compose.yml) for composing detail.
 
 1. Add RabbitMQ user: `make mq-adduser`; for supervisor role (enable website operation): `make mq-supervisor`
+
+1. Running the test cases
+
+### Deploy
+
+1. Following the same steps described in [Tests](#tests)
 
 1. Build image for Pqx: `make pqx-build`
 

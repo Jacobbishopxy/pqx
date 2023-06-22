@@ -4,7 +4,7 @@
 include Makefile.env
 
 tree:
-	tree --dirsfirst --noreport -I "target|tests|scripts|cache|log|*.md|*.env|*.json|*.lock|*.toml|*.yml|*.csv|*.svg|*.drawio|docker|Makefile" | sed 's/^//' > Catalog.md
+	tree --dirsfirst --noreport -I "target|tests|scripts|cache|log|logs|*.md|*.env|*.json|*.lock|*.toml|*.yml|*.csv|*.svg|*.drawio|docker|Makefile" | sed 's/^//' > Catalog.md
 
 # ================================================================================================
 # facilities
