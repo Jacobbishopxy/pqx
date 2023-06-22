@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  pqx-server:
+    restart: always
+    container_name: ${PQX_CONTAINER_NAME}
+    image: ${PQX_IMAGE_NAME}:${PQX_IMAGE_VERSION}
+
+    ports:
+      - "25677:8080"
+
+    # TODO: config folder
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+    entrypoint: [ "sleep", "infinity" ]

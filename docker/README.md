@@ -1,11 +1,17 @@
 # Docker
 
-## RabbitMQ
+## Facilities
 
-1. `make rbmq-start`: pull RabbitMq and run
+- RabbitMQ
 
-1. `make rbmq-adduser`: add user and grant permission
+- PostgreSQL
 
 ## Server
 
-WIP
+- Pqx
+
+## Misc
+
+```sh
+docker run --name tmp --rm --entrypoint="" -it pqx-app:0.1 bash
+```
