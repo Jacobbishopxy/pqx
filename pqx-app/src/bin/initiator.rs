@@ -29,6 +29,7 @@ const INIT_CONFIG: &str = "init.yml";
 struct Args {
     #[arg(short, long)]
     option: String,
+    config: Option<String>,
 }
 
 // ================================================================================================

@@ -81,6 +81,8 @@ PS:
 
 1. Build image for Pqx: `make pqx-build`
 
+1. Follow the template files under `./docker/server/config`, create config files: `conn.yml` & `init.yml`.
+
 1. Run a Pqx container: `make pqx-setup`
 
 ## Test cases

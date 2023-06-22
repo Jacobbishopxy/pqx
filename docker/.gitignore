@@ -4,3 +4,7 @@
 
 /facilities/pg/*
 !/facilities/pg/.gitkeep
+
+/server/config/*
+!/server/config/conn.template.yml
+!/server/config/init.template.yml

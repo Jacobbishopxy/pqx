@@ -9,8 +9,8 @@ services:
     ports:
       - "25677:8080"
 
-    # TODO: config folder
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - ./config:/app # config folder
 
     entrypoint: [ "sleep", "infinity" ]

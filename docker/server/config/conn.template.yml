@@ -1,0 +1,18 @@
+# @author:	Jacob Xie
+# @date:	2023/06/16 15:32:25 Friday
+# @brief:
+
+mq:
+  host: localhost
+  port: 5677
+  user: dev
+  pass: devpass
+  vhost: devhost
+
+db:
+  protocol: postgres
+  host: localhost
+  port: 5437
+  user: dev
+  pass: devpass
+  db: dev
