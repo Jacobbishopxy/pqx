@@ -3,11 +3,8 @@
 //! date: 2023/05/26 23:55:37 Friday
 //! brief:
 
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    process::{Command, ExitStatus, Stdio},
-};
+use std::ffi::OsStr;
+use std::process::{Command, ExitStatus, Stdio};
 
 use crate::error::PqxResult;
 
@@ -64,33 +61,10 @@ where
     Ok(es)
 }
 
-// ================================================================================================
-// Path
-// ================================================================================================
-
-pub fn current_dir() -> PqxResult<PathBuf> {
-    let dir = std::env::current_dir()?;
-
-    Ok(dir)
-}
-
-pub fn parent_dir(pb: PathBuf) -> PqxResult<PathBuf> {
-    let dir = pb.parent().ok_or("parent path fail")?.to_owned();
-
-    Ok(dir)
-}
-
-pub fn join_dir<L, R>(lhs: L, rhs: R) -> PqxResult<PathBuf>
-where
-    L: AsRef<Path>,
-    R: AsRef<Path>,
-{
-    Ok(lhs.as_ref().join(rhs))
-}
-
 #[cfg(test)]
 mod util_tests {
     use super::*;
+    use pqx_util::{current_dir, join_dir, parent_dir};
 
     #[test]
     fn cmd_ll_success() {

@@ -1,12 +1,14 @@
 //! file: test_mq.rs
 //! author: Jacob Xie
 //! date: 2023/05/28 12:34:16 Sunday
-//! brief:
+//!
+//! Instead of using connection info from a config file, this example uses constants for direct
+//! illustration.
 
 use once_cell::sync::Lazy;
 use pqx::ec::cmd::CmdArg;
-use pqx::ec::util::*;
 use pqx::mq::*;
+use pqx_util::{current_dir, join_dir, parent_dir};
 
 // ================================================================================================
 // const

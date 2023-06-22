@@ -6,9 +6,9 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use pqx::ec::util::*;
 use pqx::error::PqxResult;
 use pqx::mq::{MqClient, Subscriber};
+use pqx::pqx_util::get_cur_dir_file;
 use pqx::pqx_util::{logging_init, now, read_yaml, PersistClient};
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 use pqx_app::execution::Executor;
@@ -27,11 +27,6 @@ const INIT_CONFIG: &str = "init.yml";
 // ================================================================================================
 // Helper
 // ================================================================================================
-
-// PANIC if file not found!
-fn get_conn_yaml_path(filename: &str) -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), filename).unwrap()
-}
 
 #[instrument]
 pub async fn logging_info(s: String) -> PqxResult<()> {
@@ -67,11 +62,11 @@ async fn main() {
     logging_init(LOGGING_DIR, FILENAME_PREFIX);
 
     // read connection config
-    let config_path = get_conn_yaml_path(CONN_CONFIG);
+    let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();
     let conn_config: ConnectionsConfig = read_yaml(config_path.to_str().unwrap()).unwrap();
 
     // read setup config
-    let config_path = get_conn_yaml_path(INIT_CONFIG);
+    let config_path = get_cur_dir_file(INIT_CONFIG).unwrap();
     let config_path = config_path.to_string_lossy();
     let init_config: InitiationsConfig = read_yaml(config_path).unwrap();
 

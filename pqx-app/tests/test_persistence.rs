@@ -4,38 +4,20 @@
 //! brief:
 
 use once_cell::sync::Lazy;
-use pqx::ec::{util::*, CmdArg};
-use pqx::mq::MqConn;
-use pqx::pqx_util::db::{PersistClient, PersistConn};
-use pqx::pqx_util::read_yaml;
+use pqx::ec::CmdArg;
+use pqx::pqx_util::{get_cur_dir_file, read_yaml, PersistClient, PersistConn};
 use pqx_app::adt::{Command, ExecutionResult};
+use pqx_app::cfg::ConnectionsConfig;
 use pqx_app::persistence::MessagePersistent;
-use serde::Deserialize;
-
-// ================================================================================================
-// helper
-// ================================================================================================
-
-// PANIC if file not found!
-fn get_conn_yaml_path() -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), "config.yml").unwrap()
-}
 
 // ================================================================================================
 // static
 // ================================================================================================
 
-#[allow(dead_code)]
-#[derive(Debug, Deserialize)]
-struct Config {
-    mq: MqConn,
-    db: PersistConn,
-}
-
 static CONN: Lazy<PersistConn> = Lazy::new(|| {
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
 
-    let config: Config = read_yaml(pth.to_str().unwrap()).unwrap();
+    let config: ConnectionsConfig = read_yaml(pth.to_str().unwrap()).unwrap();
 
     config.db
 });

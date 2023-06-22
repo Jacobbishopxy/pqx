@@ -8,29 +8,25 @@ use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
 use chrono::{DateTime, Local};
-use pqx::ec::util::*;
 use pqx::mq::*;
+use pqx_util::get_cur_dir_file;
 use serde::{Deserialize, Serialize};
 
 // ================================================================================================
 // const
 // ================================================================================================
 
-const EXCHG: &str = "rbmq-rs-topic";
+const EXCHG: &str = "pqx.test.topic";
 
-const TOPIC_ROUT1: &str = "rbmq-rs-rout.tag1.*";
-const TOPIC_ROUT2: &str = "rbmq-rs-rout.*.tag2";
+const TOPIC_ROUT1: &str = "pqx.test.rout.tag1.*";
+const TOPIC_ROUT2: &str = "pqx.test.rout.*.tag2";
 
-const TOPIC_QUE1: &str = "rbmq-rs-tq1";
-const TOPIC_QUE2: &str = "rbmq-rs-tq2";
+const TOPIC_QUE1: &str = "pqx.test.tq1";
+const TOPIC_QUE2: &str = "pqx.test.tq2";
 
 // ================================================================================================
 // helper
 // ================================================================================================
-
-fn get_conn_yaml_path() -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), "conn.yml").unwrap()
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct DevMsg {
@@ -90,7 +86,7 @@ impl AsyncConsumer for DevTopicConsumer {
 async fn declare_exchange_and_queues() {
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;
@@ -115,7 +111,7 @@ async fn declare_exchange_and_queues() {
 async fn mq_subscribe1_success() {
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;
@@ -136,7 +132,7 @@ async fn mq_subscribe1_success() {
 async fn mq_subscribe2_success() {
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;
@@ -157,7 +153,7 @@ async fn mq_subscribe2_success() {
 async fn publish_msg_route() {
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;

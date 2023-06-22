@@ -79,6 +79,10 @@ PS:
 
 1. Add RabbitMQ user: `make mq-adduser`; for supervisor role (enable website operation): `make mq-supervisor`
 
+1. Build image for Pqx: `make pqx-build`
+
+1. Run a Pqx container: `make pqx-setup`
+
 ## Test cases
 
 - [cmd](./pqx/tests/test_cmd.rs): `cmd` module, commands composition and execution

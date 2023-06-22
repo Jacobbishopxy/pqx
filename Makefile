@@ -64,3 +64,11 @@ clean:
 
 update:
 	cargo update
+
+# ////////////////////////////////////////////////////////////////////////////////////////////////
+
+pqx-build:
+	cd docker/server && ./build.sh
+
+pqx-setup:
+	cd docker/server && ./setup.sh

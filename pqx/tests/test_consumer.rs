@@ -9,12 +9,12 @@ use std::sync::Arc;
 use amqprs::channel::ExchangeType;
 use async_trait::async_trait;
 use chrono::{DateTime, Local};
-use pqx::ec::util::*;
 use pqx::ec::CmdArg;
 use pqx::ec::CmdAsyncExecutor;
 use pqx::error::PqxError;
 use pqx::error::PqxResult;
 use pqx::mq::*;
+use pqx::pqx_util::{current_dir, get_cur_dir_file, join_dir, parent_dir};
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
 
@@ -22,20 +22,11 @@ use tracing::{info, instrument};
 // const
 // ================================================================================================
 
-const EXCHG: &str = "rbmq-rs-exchange";
-const ROUT: &str = "rbmq-rs-rout";
-const QUE: &str = "rbmq-rs-que";
+const EXCHG: &str = "pqx.test.direct";
+const ROUT: &str = "pqx.test.rout";
+const QUE: &str = "pqx.test.que";
 
 const CONDA_ENV: &str = "py310";
-
-// ================================================================================================
-// helper
-// ================================================================================================
-
-// PANIC if file not found!
-fn get_conn_yaml_path() -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), "conn.yml").unwrap()
-}
 
 // ================================================================================================
 // DevMsg
@@ -136,7 +127,7 @@ async fn mq_subscriber_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMq
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
 
@@ -180,7 +171,7 @@ async fn mq_publish_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMQ
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
 

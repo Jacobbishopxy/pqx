@@ -44,20 +44,15 @@ pub struct InitiationsConfig {
 
 #[cfg(test)]
 mod test_cfg {
-    use pqx::ec::util::{current_dir, join_dir};
-    use pqx::pqx_util::read_yaml;
+    use pqx::pqx_util::{get_cur_dir_file, read_yaml};
 
     use super::*;
 
     const INIT_CONFIG: &str = "init.template.yml";
 
-    fn get_conn_yaml_path(filename: &str) -> std::path::PathBuf {
-        join_dir(current_dir().unwrap(), filename).unwrap()
-    }
-
     #[test]
     fn read_yaml_success() {
-        let config_path = get_conn_yaml_path(INIT_CONFIG);
+        let config_path = get_cur_dir_file(INIT_CONFIG).unwrap();
         let config_path = config_path.to_string_lossy();
         let config: InitiationsConfig = read_yaml(config_path).unwrap();
 

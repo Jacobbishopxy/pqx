@@ -4,6 +4,7 @@
 //! brief:
 
 use std::fs::File;
+use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 
@@ -29,4 +30,32 @@ where
     let d: T = serde_json::from_reader(f)?;
 
     Ok(d)
+}
+
+// ================================================================================================
+// Path
+// ================================================================================================
+
+pub fn current_dir() -> PqxUtilResult<PathBuf> {
+    let dir = std::env::current_dir()?;
+
+    Ok(dir)
+}
+
+pub fn parent_dir(pb: PathBuf) -> PqxUtilResult<PathBuf> {
+    let dir = pb.parent().ok_or("parent path fail")?.to_owned();
+
+    Ok(dir)
+}
+
+pub fn join_dir<L, R>(lhs: L, rhs: R) -> PqxUtilResult<PathBuf>
+where
+    L: AsRef<Path>,
+    R: AsRef<Path>,
+{
+    Ok(lhs.as_ref().join(rhs))
+}
+
+pub fn get_cur_dir_file(filename: &str) -> PqxUtilResult<PathBuf> {
+    Ok(join_dir(current_dir()?, filename)?)
 }

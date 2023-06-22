@@ -13,29 +13,21 @@ use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
 use chrono::{DateTime, Local};
-use pqx::ec::util::*;
 use pqx::mq::*;
+use pqx_util::get_cur_dir_file;
 use serde::{Deserialize, Serialize};
 
 // ================================================================================================
 // const
 // ================================================================================================
 
-const EXCHG: &str = "rbmq-rs-exchange";
-const ROUT: &str = "rbmq-rs-rout";
-const QUE: &str = "rbmq-rs-que";
+const EXCHG: &str = "pqx.test.direct";
+const ROUT: &str = "pqx.test.rout";
+const QUE: &str = "pqx.test.que";
 
-const DLX: &str = "rbmq-rs-dlx";
-const DL_ROUT: &str = "rbmq-rs-dl-rout";
-const DL_QUE: &str = "rbmq-rs-dl";
-
-// ================================================================================================
-// helper
-// ================================================================================================
-
-fn get_conn_yaml_path() -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), "conn.yml").unwrap()
-}
+const DLX: &str = "pqx.test.dlx";
+const DL_ROUT: &str = "pqx.test.dl-rout";
+const DL_QUE: &str = "pqx.test.dl-que";
 
 // ================================================================================================
 // msg
@@ -109,7 +101,7 @@ impl AsyncConsumer for DevDlxConsumer {
 async fn declare_dlx_success() {
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;
@@ -131,7 +123,7 @@ async fn mq_subscribe_success() {
 
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;
@@ -173,7 +165,7 @@ async fn mq_subscribe_success() {
 async fn publish_msg_to_dlx_success() {
     // 0. client connection and open channel
     let mut client = MqClient::new();
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.open_channel(None).await;

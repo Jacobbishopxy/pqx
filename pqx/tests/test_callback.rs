@@ -8,27 +8,10 @@ use amqprs::channel::Channel;
 use amqprs::connection::Connection;
 use amqprs::{Ack, BasicProperties, Cancel, Close, CloseChannel, Nack, Return};
 use async_trait::async_trait;
-use pqx::ec::util::*;
 use pqx::mq::MqClient;
+use pqx::pqx_util::get_cur_dir_file;
 
 type Result<T> = std::result::Result<T, amqprs::error::Error>;
-
-// ================================================================================================
-// const
-// ================================================================================================
-
-// const EXCHG: &str = "rbmq-rs-exchange";
-// const ROUT: &str = "rbmq-rs-rout";
-// const QUE: &str = "rbmq-rs-que";
-
-// ================================================================================================
-// helper
-// ================================================================================================
-
-// PANIC if file not found!
-fn get_conn_yaml_path() -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), "conn.yml").unwrap()
-}
 
 // ================================================================================================
 // ConnectionCallback
@@ -93,7 +76,7 @@ async fn register_callback_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMQ, and register connection callback
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
     let res = client.connection().unwrap().register_callback(ConnC).await;

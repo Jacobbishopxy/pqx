@@ -8,6 +8,7 @@ use std::sync::Arc;
 use pqx::ec::util::*;
 use pqx::ec::*;
 use pqx::error::PqxResult;
+use pqx::pqx_util::{current_dir, join_dir, parent_dir};
 
 // ================================================================================================
 // Constants

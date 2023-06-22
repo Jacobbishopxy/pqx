@@ -9,29 +9,20 @@ use amqprs::channel::{BasicAckArguments, Channel, ExchangeType};
 use amqprs::consumer::AsyncConsumer;
 use amqprs::{BasicProperties, Deliver};
 use async_trait::async_trait;
-use pqx::ec::util::*;
 use pqx::ec::*;
 use pqx::error::PqxResult;
 use pqx::mq::*;
+use pqx_util::{current_dir, get_cur_dir_file, join_dir, parent_dir};
 
 // ================================================================================================
 // const
 // ================================================================================================
 
-const EXCHG: &str = "rbmq-rs-exchange";
-const ROUT: &str = "rbmq-rs-rout";
-const QUE: &str = "rbmq-rs-que";
+const EXCHG: &str = "pqx.test.direct";
+const ROUT: &str = "pqx.test.rout";
+const QUE: &str = "pqx.test.que";
 
 const CONDA_ENV: &str = "py310";
-
-// ================================================================================================
-// helper
-// ================================================================================================
-
-// PANIC if file not found!
-fn get_conn_yaml_path() -> std::path::PathBuf {
-    join_dir(current_dir().unwrap(), "conn.yml").unwrap()
-}
 
 // ================================================================================================
 // impl AsyncConsumer
@@ -101,7 +92,7 @@ async fn mq_subscribe_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMq
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
 
@@ -147,7 +138,7 @@ async fn mq_publish_success() {
     let mut client = MqClient::new();
 
     // 1. connect to RabbitMQ
-    let pth = get_conn_yaml_path();
+    let pth = get_cur_dir_file("conn.yml").unwrap();
     let res = client.connect_by_yaml(pth.to_str().unwrap()).await;
     assert!(res.is_ok());
 
