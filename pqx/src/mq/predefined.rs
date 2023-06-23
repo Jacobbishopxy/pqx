@@ -159,6 +159,18 @@ impl FieldTableBuilder {
     }
 }
 
+impl From<FieldTable> for FieldTableBuilder {
+    fn from(ft: FieldTable) -> Self {
+        FieldTableBuilder(ft)
+    }
+}
+
+impl<'a> From<Option<&'a FieldTable>> for FieldTableBuilder {
+    fn from(opt: Option<&'a FieldTable>) -> Self {
+        FieldTableBuilder(opt.cloned().unwrap_or(FieldTable::new()))
+    }
+}
+
 // ================================================================================================
 // field table getter
 // ================================================================================================
@@ -240,13 +252,22 @@ impl<'a> FieldTableGetter<'a> {
 // ================================================================================================
 
 pub struct Retry {
-    pub exchange: String,
-    pub routing_key: String,
-    pub poke: u16,
-    pub retries: u8,
+    exchange: String,
+    routing_key: String,
+    poke: u16, // secondes
+    retries: u8,
 }
 
 impl Retry {
+    pub fn new(exchange: &str, routing_key: &str, poke: u16, retries: u8) -> Self {
+        Self {
+            exchange: exchange.to_owned(),
+            routing_key: routing_key.to_owned(),
+            poke,
+            retries,
+        }
+    }
+
     pub async fn retry(
         &self,
         channel: &Channel,
@@ -259,7 +280,9 @@ impl Retry {
 
         // if x_delay doesn't exist
         if let None = headers.get(&X_DELAY) {
-            headers.insert(X_DELAY.clone(), FieldValue::I(self.poke.into()));
+            // convert to milliseconds
+            let p = i32::from(self.poke) * 1000;
+            headers.insert(X_DELAY.clone(), FieldValue::I(p));
         }
 
         // if x_retries doesn't exist
@@ -275,6 +298,7 @@ impl Retry {
             headers.remove(&X_RETRIES);
             headers.insert(X_RETRIES.clone(), FieldValue::s(retries));
 
+            // publish to delayed-exchange
             channel
                 .basic_publish(
                     props.with_headers(headers).finish(),
@@ -283,7 +307,10 @@ impl Retry {
                 )
                 .await?;
 
-            let _ = channel.basic_ack(BasicAckArguments::new(deliver.delivery_tag(), false));
+            // consume message in current queue
+            channel
+                .basic_ack(BasicAckArguments::new(deliver.delivery_tag(), false))
+                .await?;
         } else {
             // discard message (if DLX is set, then goes to there)
             channel

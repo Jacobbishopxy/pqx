@@ -70,12 +70,12 @@ impl Consumer<Command, ExitStatus> for Executor {
     }
 
     fn gen_retry(&self, message: &Command) -> Retry {
-        Retry {
-            exchange: self.delayed_exchange.clone(),
-            routing_key: String::from(""),
-            poke: message.poke.unwrap_or(10000), // default 10s
-            retries: message.retry.unwrap_or(1), // default retry once
-        }
+        Retry::new(
+            &self.delayed_exchange,
+            "",                         // header exchange, no need routing_key
+            message.poke.unwrap_or(10), // default 10s
+            message.retry.unwrap_or(1), // default retry once
+        )
     }
 
     #[instrument]
