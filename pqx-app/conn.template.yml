@@ -16,3 +16,8 @@ db:
   user: dev
   pass: devpass
   db: dev
+
+mq_api:
+  url: http://localhost:15672/api
+  auth: Basic YWRtaW46YWRtaW4=
+  vhost: devhost

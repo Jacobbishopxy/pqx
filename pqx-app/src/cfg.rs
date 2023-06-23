@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use pqx::mq::{MatchType, MqConn};
-use pqx::pqx_util::PersistConn;
+use pqx::pqx_util::{MqClientCfg, PersistConn};
 use serde::Deserialize;
 
 // ================================================================================================
@@ -17,6 +17,7 @@ use serde::Deserialize;
 pub struct ConnectionsConfig {
     pub mq: MqConn,
     pub db: PersistConn,
+    pub mq_api: MqClientCfg,
 }
 
 // ================================================================================================

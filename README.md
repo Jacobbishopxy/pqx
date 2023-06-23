@@ -8,7 +8,15 @@ PS:
 
 ## Project Structure
 
-- `pqx-util`: util functions
+- `pqx-util`: utilities
+
+  - `cfg`: config and misc
+
+  - `db`: persistent connection
+
+  - `logging`: logging utils
+
+  - `mq`: RabbitMQ management APIs
 
 - `pqx`: library
 
@@ -16,18 +24,10 @@ PS:
 
   - `mq`: publisher and subscriber
 
-- `mq-api`: RabbitMQ management API
-
 - `pqx-app`: applications
 
 ```txt
 .
-├── mq-api
-│   └── src
-│       ├── client.rs
-│       ├── error.rs
-│       ├── lib.rs
-│       └── query.rs
 ├── pqx
 │   └── src
 │       ├── ec
@@ -64,7 +64,8 @@ PS:
 │       ├── db.rs
 │       ├── error.rs
 │       ├── lib.rs
-│       └── logging.rs
+│       ├── logging.rs
+│       └── mq.rs
 └── LICENSE
 ```
 

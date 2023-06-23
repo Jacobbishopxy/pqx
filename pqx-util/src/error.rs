@@ -23,6 +23,9 @@ pub enum PqxUtilError {
     #[error(transparent)]
     SeaOrm(sea_orm::error::DbErr),
 
+    #[error(transparent)]
+    Reqwest(reqwest::Error),
+
     #[error("{0}")]
     Custom(&'static str),
 }
@@ -31,6 +34,7 @@ impl_from_error!(std::io::Error, PqxUtilError, StdIO);
 impl_from_error!(serde_json::Error, PqxUtilError, SerdeJson);
 impl_from_error!(serde_yaml::Error, PqxUtilError, SerdeYaml);
 impl_from_error!(sea_orm::error::DbErr, PqxUtilError, SeaOrm);
+impl_from_error!(reqwest::Error, PqxUtilError, Reqwest);
 
 impl From<&'static str> for PqxUtilError {
     fn from(e: &'static str) -> Self {
