@@ -297,6 +297,8 @@ where
 
         // handle props
         self.consumer().handle_props(&basic_properties);
+
+        // TODO: consume_timeout by `tokio::time::{timeout, Duration}`
         // future result
         let fut_res = self.consumer().consume(&msg).await;
 

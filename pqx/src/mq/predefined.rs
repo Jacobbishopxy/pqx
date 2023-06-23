@@ -36,6 +36,9 @@ pub static X_MATCH: Lazy<FieldName> = Lazy::new(|| FieldName::try_from("x-match"
 pub static X_MESSAGE_TTL: Lazy<FieldName> =
     Lazy::new(|| FieldName::try_from("x-message-ttl").unwrap());
 
+pub static X_CONSUME_TTL: Lazy<FieldName> =
+    Lazy::new(|| FieldName::try_from("x-consume-ttl").unwrap());
+
 pub static X_DEAD_LETTER_EXCHANGE: Lazy<FieldName> =
     Lazy::new(|| FieldName::try_from("x-dead-letter-exchange").unwrap());
 
@@ -132,6 +135,12 @@ impl FieldTableBuilder {
         self
     }
 
+    pub fn x_consume_ttl(&mut self, ttl: i64) -> &mut Self {
+        self.0.insert(X_CONSUME_TTL.clone(), FieldValue::l(ttl));
+
+        self
+    }
+
     pub fn x_dead_letter_exchange(
         &mut self,
         exchange_name: impl Into<String>,
@@ -198,6 +207,14 @@ impl<'a> FieldTableGetter<'a> {
             Some(FieldValue::l(t)) => Ok(*t),
             None => Err("x-message-ttl doesn't exist".into()),
             _ => Err("x-message-ttl is not a `i64`".into()),
+        }
+    }
+
+    pub fn x_consume_ttl(&self) -> PqxResult<i64> {
+        match self.0.get(&X_MESSAGE_TTL) {
+            Some(FieldValue::l(t)) => Ok(*t),
+            None => Err("x-consume-ttl doesn't exist".into()),
+            _ => Err("x-consume-ttl is not a `i64`".into()),
         }
     }
 

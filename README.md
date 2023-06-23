@@ -2,7 +2,85 @@
 
 PQX stands for Priority Queue Execution. Inspired by [the official tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-python.html), PQX-APP uses RabbitMQ as the message system, and serves as a RPC client which pulls messages from MQ and deserialize messages then executes commands.
 
-Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail;
+Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail.
+
+A full command in Json expression looks like this:
+
+```json
+{
+    "consumer_ids": ["h1", "h3"],
+    "retry": 5,
+    "poke": 60,
+    "waiting_timeout": 180,
+    "consuming_timeout": 270,
+    "cmd": {
+        "CondaPython": {
+            "env": "py310",
+            "dir": "$HOME/Code/pqx/scripts",
+            "script": "print_csv_in_line.py"
+        }
+    }
+}
+```
+
+where:
+
+- `consumer_ids` means which consumer to receive this message;
+
+- `retry` the number of retries, default `0`;
+
+- `poke` retry frequency in seconds;
+
+- `waiting_timeout` the message lives in the queue (in seconds), default infinity;
+
+- `consuming_timeout` the `acking` timeout in a consumer (in seconds);
+
+- `cmd` the command wants to be executed, for more detail see `CmdArg` in [adt.rs](./pqx/src/ec/cmd.rs).
+
+<details>
+<summary>and the full definition in Rust:</summary>
+
+```rs
+pub struct Command {
+    pub consumer_ids: Vec<String>,
+    pub retry: Option<u8>,
+    pub poke: Option<u16>,
+    pub waiting_timeout: Option<u32>,
+    pub consuming_timeout: Option<u32>,
+    pub cmd: CmdArg,
+}
+
+pub enum CmdArg {
+    Ping {
+        addr: String,
+    },
+    Bash {
+        cmd: Vec<String>,
+    },
+    Ssh {
+        ip: String,
+        user: String,
+        cmd: Vec<String>,
+    },
+    Sshpass {
+        ip: String,
+        user: String,
+        pass: String,
+        cmd: Vec<String>,
+    },
+    CondaPython {
+        env: String,
+        dir: String,
+        script: String,
+    },
+    DockerExec {
+        container: String,
+        cmd: Vec<String>,
+    },
+}
+```
+
+</details>
 
 ## Project Structure
 
@@ -120,3 +198,7 @@ Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, chec
 - [message persistence](./pqx-app/tests/test_persistence.rs): database interaction
 
 - [mq api](./pqx-util/tests/test_mq.rs): RabbitMQ management APIs
+
+## Todo
+
+- impl `consuming_timeout` in `ConsumerWrapper` by `tokio::time::{timeout, Duration}`

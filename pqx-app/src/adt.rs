@@ -4,10 +4,10 @@
 //! brief:
 
 use chrono::Local;
-use pqx::amqprs::{FieldName, FieldTable, FieldValue};
+use pqx::amqprs::{FieldTable, FieldValue};
 use pqx::ec::CmdArg;
 use pqx::error::PqxError;
-use pqx::mq::{X_DELAY, X_MESSAGE_TTL, X_RETRIES};
+use pqx::mq::{X_CONSUME_TTL, X_DELAY, X_MESSAGE_TTL, X_RETRIES};
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
@@ -22,8 +22,8 @@ pub struct Command {
     pub consumer_ids: Vec<String>,
     pub retry: Option<u8>,
     pub poke: Option<u16>,
-    pub waiting_timeout: Option<usize>,
-    pub consuming_timeout: Option<usize>,
+    pub waiting_timeout: Option<u32>,
+    pub consuming_timeout: Option<u32>,
     pub cmd: CmdArg,
 }
 
@@ -55,18 +55,21 @@ impl<'a> TryFrom<&'a Command> for FieldTable {
         }
 
         if let Some(p) = cmd.poke {
-            ft.insert(X_DELAY.clone(), FieldValue::I(p.into()));
+            // convert to milliseconds
+            let p = i32::from(p) * 1000;
+            ft.insert(X_DELAY.clone(), FieldValue::I(p));
         }
 
         if let Some(t) = cmd.waiting_timeout {
-            ft.insert(X_MESSAGE_TTL.clone(), FieldValue::l(i64::try_from(t)?));
+            // convert to milliseconds
+            let t = i64::from(t) * 1000;
+            ft.insert(X_MESSAGE_TTL.clone(), FieldValue::l(t));
         }
 
         if let Some(t) = cmd.consuming_timeout {
-            ft.insert(
-                FieldName::try_from("x-consume-ttl".to_string())?,
-                FieldValue::l(i64::try_from(t)?),
-            );
+            // convert to milliseconds
+            let t = i64::from(t) * 1000;
+            ft.insert(X_CONSUME_TTL.clone(), FieldValue::l(t));
         }
 
         Ok(ft)
@@ -80,10 +83,10 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
     fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
         let am = message_history::ActiveModel {
             consumer_ids: Set(cmd.consumer_ids.join(",")),
-            retry: Set(cmd.retry.map(i16::try_from).transpose()?),
-            poke: Set(cmd.poke.map(i32::try_from).transpose()?),
-            waiting_timeout: Set(cmd.waiting_timeout.map(i64::try_from).transpose()?),
-            consuming_timeout: Set(cmd.consuming_timeout.map(i64::try_from).transpose()?),
+            retry: Set(cmd.retry.map(i16::from)),
+            poke: Set(cmd.poke.map(i32::from)),
+            waiting_timeout: Set(cmd.waiting_timeout.map(i64::from)),
+            consuming_timeout: Set(cmd.consuming_timeout.map(i64::from)),
             cmd: Set(serde_json::json!(cmd.cmd)),
             time: Set(Local::now()),
             ..Default::default()
@@ -105,8 +108,8 @@ impl TryFrom<message_history::Model> for Command {
                 .collect::<Vec<_>>(),
             retry: m.retry.map(u8::try_from).transpose()?,
             poke: m.poke.map(u16::try_from).transpose()?,
-            waiting_timeout: m.waiting_timeout.map(usize::try_from).transpose()?,
-            consuming_timeout: m.consuming_timeout.map(usize::try_from).transpose()?,
+            waiting_timeout: m.waiting_timeout.map(u32::try_from).transpose()?,
+            consuming_timeout: m.consuming_timeout.map(u32::try_from).transpose()?,
             cmd: serde_json::from_value(m.cmd)?,
         };
 
