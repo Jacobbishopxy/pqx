@@ -1,10 +1,8 @@
 # PQX
 
-PQX stands for Priority Queue Execution. PQX uses RabbitMQ as the message system, and serves as a subscriber for receiving messages and execute related commands.
+PQX stands for Priority Queue Execution. Inspired by [the official tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-python.html), PQX-APP uses RabbitMQ as the message system, and serves as a RPC client which pulls messages from MQ and deserialize messages then executes commands.
 
-PS:
-
-1. Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail;
+Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail;
 
 ## Project Structure
 
