@@ -9,6 +9,7 @@ services:
       RABBITMQ_DEFAULT_PASS: admin
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_VHOST: vhost
+
     ports:
       - "5677:5672"
       - "15677:15672"
@@ -25,9 +26,15 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: admin
       PGDATA: /var/lib/postgresql/data/pgdata
+
     ports:
       - "5437:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./pg:/var/lib/postgresql/data:z
       - /etc/localtime:/etc/localtime:ro
+
+# networks:
+#   default:
+#     name: pqx-dev-net
+#     external: true

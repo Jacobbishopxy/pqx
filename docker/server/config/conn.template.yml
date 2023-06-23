@@ -3,7 +3,7 @@
 # @brief:
 
 mq:
-  host: localhost
+  host: 127.0.0.1
   port: 5677
   user: dev
   pass: devpass
@@ -11,8 +11,13 @@ mq:
 
 db:
   protocol: postgres
-  host: localhost
+  host: 127.0.0.1
   port: 5437
   user: dev
   pass: devpass
   db: dev
+
+mq_api:
+  url: http://127.0.0.1:15672/api
+  auth: Basic YWRtaW46YWRtaW4=
+  vhost: devhost

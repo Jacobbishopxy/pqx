@@ -11,7 +11,7 @@ tree:
 # ================================================================================================
 
 facilities-build:
-	cd docker/facilities && ./setup.sh
+	cd docker/facilities && ./build.sh
 
 facilities-start:
 	cd docker/facilities && docker-compose up -d

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # author:	Jacob Xie
-# @date:	2023/06/10 08:54:44 Saturday
+# @date:	2023/06/24 00:26:36 Saturday
+# @brief:
 
-docker build -t rabbitmq-dev:0.1 .
+source ../.env
 
+docker network create $INTERNAL_NETWORK
+docker-compose down
+docker-compose up -d

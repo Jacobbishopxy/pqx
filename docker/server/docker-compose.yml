@@ -11,6 +11,11 @@ services:
 
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./config:/app # config folder
+      - ./config:/app:z # config folder
 
     entrypoint: [ "sleep", "infinity" ]
+
+# networks:
+#   default:
+#     name: pqx-dev-net
+#     external: true

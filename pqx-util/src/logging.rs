@@ -3,8 +3,6 @@
 //! date: 2023/06/13 08:14:06 Tuesday
 //! brief:
 
-use std::path::Path;
-
 use tracing::{debug, error, info, instrument, warn};
 
 use super::now;
@@ -29,8 +27,14 @@ pub async fn logging_warn(s: String) {
     warn!("{} {}", now!(), s);
 }
 
-pub fn logging_init(dir: impl AsRef<Path>, filename_prefix: impl AsRef<Path>) {
-    let file_appender = tracing_appender::rolling::daily(dir, filename_prefix);
-    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-    tracing_subscriber::fmt().with_writer(non_blocking).init();
+#[macro_export]
+macro_rules! logging_init {
+    ($dir: expr, $pre: expr, $lvl: ident) => {
+        let file_appender = ::tracing_appender::rolling::daily($dir, $pre);
+        let (non_blocking, _guard) = ::tracing_appender::non_blocking(file_appender);
+        ::tracing_subscriber::fmt()
+            .with_max_level(::tracing::Level::$lvl)
+            .with_writer(non_blocking)
+            .init();
+    };
 }

@@ -163,7 +163,7 @@ async fn create_table(client: &PersistClient) -> PqxResult<()> {
 async fn main() {
     let args = Args::parse();
 
-    logging_init(LOGGING_DIR, FILENAME_PREFIX);
+    logging_init!(LOGGING_DIR, FILENAME_PREFIX, INFO);
 
     // read connection config
     let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();
