@@ -26,6 +26,10 @@ PS:
 
 - `pqx-app`: applications
 
+  - `initiator`: check existences | create tables | declare exchanges, queues and etc.
+
+  - `subscriber`: app
+
 ```txt
 .
 ├── pqx
@@ -116,3 +120,5 @@ PS:
 - [delay retry](./pqx/tests/test_retry.rs): based on plugin [delayed_message_exchange](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange), implementation of message retry
 
 - [message persistence](./pqx-app/tests/test_persistence.rs): database interaction
+
+- [mq api](./pqx-util/tests/test_mq.rs): RabbitMQ management APIs
