@@ -6,6 +6,7 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::sync::Arc;
+use std::time::Duration;
 
 use amqprs::channel::{BasicAckArguments, BasicNackArguments, Channel};
 use amqprs::consumer::AsyncConsumer;
@@ -15,10 +16,10 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::Mutex;
+use tokio::time::timeout;
 
+use super::{FieldTableViewer, Retry};
 use crate::error::{PqxError, PqxResult};
-
-use super::Retry;
 
 // ================================================================================================
 // PqxConsumer
@@ -56,7 +57,7 @@ impl AsyncConsumer for PqxDefaultConsumer {
 #[derive(Debug)]
 pub enum ConsumerResult<R: Send + Debug> {
     Success(R),
-    Retry(R),
+    Retry(Option<R>), // if timeout, then `None`
     Failure(R),
 }
 
@@ -65,7 +66,7 @@ impl<R: Send + Debug> ConsumerResult<R> {
         Self::Success(r)
     }
 
-    pub fn retry(r: R) -> Self {
+    pub fn retry(r: Option<R>) -> Self {
         Self::Retry(r)
     }
 
@@ -113,7 +114,7 @@ where
     }
 
     #[allow(unused_variables)]
-    async fn retry_callback(&mut self, message: &M, result: R) -> PqxResult<()> {
+    async fn retry_callback(&mut self, message: &M, result: Option<R>) -> PqxResult<()> {
         Ok(())
     }
 
@@ -248,7 +249,7 @@ where
         props: BasicProperties,
         content: Vec<u8>,
         message: &M,
-        result: R,
+        result: Option<R>,
     ) {
         if let Err(_) = self.consumer().retry_callback(message, result).await {
             self.signal_consume(false).await;
@@ -298,9 +299,29 @@ where
         // handle props
         self.consumer().handle_props(&basic_properties);
 
-        // TODO: consume_timeout by `tokio::time::{timeout, Duration}`
-        // future result
-        let fut_res = self.consumer().consume(&msg).await;
+        let consume_fut = self.consumer().consume(&msg);
+
+        // get consume_timeout from headers
+        let opt_dur = basic_properties
+            .headers()
+            .and_then(|ft| FieldTableViewer::from(ft).x_consume_ttl().ok())
+            .and_then(|ct| {
+                if ct > 0 {
+                    Some(Duration::from_millis(ct.try_into().unwrap()))
+                } else {
+                    None
+                }
+            });
+
+        // if duration exists, then running `consume_fut` in a timeout environment
+        let fut_res = match opt_dur {
+            // if timeout, then retry
+            Some(dur) => match timeout(dur, consume_fut).await {
+                Ok(r) => r,
+                Err(_) => Ok(ConsumerResult::retry(None)),
+            },
+            None => consume_fut.await,
+        };
 
         // according to biz logic determine whether responds Ack/Requeue/Discard
         match fut_res {

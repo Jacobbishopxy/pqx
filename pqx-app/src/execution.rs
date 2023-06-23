@@ -62,7 +62,7 @@ impl Consumer<Command, ExitStatus> for Executor {
             ConsumerResult::success(es)
         } else {
             // instead of `Requeue`, use `Retry`
-            ConsumerResult::retry(es)
+            ConsumerResult::retry(Some(es))
         };
         debug!("{} consumed result: {:?}", now!(), &res);
 
@@ -92,13 +92,22 @@ impl Consumer<Command, ExitStatus> for Executor {
     }
 
     #[instrument]
-    async fn retry_callback(&mut self, content: &Command, result: ExitStatus) -> PqxResult<()> {
-        let ec = result.code().unwrap_or(1);
-        let er = ExecutionResult::new_with_result(ec, format!("{:?}", result));
-
+    async fn retry_callback(
+        &mut self,
+        content: &Command,
+        result: Option<ExitStatus>,
+    ) -> PqxResult<()> {
         // persist message into db
         let id = self.persist.insert_history(content).await?;
         debug!("{} retry insert_history id: {}", now!(), id);
+
+        let er = match result {
+            Some(es) => {
+                let ec = es.code().unwrap_or(1);
+                ExecutionResult::new_with_result(ec, format!("{:?}", result))
+            }
+            None => ExecutionResult::new_with_result(1, "timeout"),
+        };
         let id = self.persist.insert_result(id, &er).await?;
         debug!("{} retry insert_result id: {}", now!(), id);
 

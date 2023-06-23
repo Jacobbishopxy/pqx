@@ -172,12 +172,12 @@ impl<'a> From<Option<&'a FieldTable>> for FieldTableBuilder {
 }
 
 // ================================================================================================
-// field table getter
+// field table viewer
 // ================================================================================================
 
-pub struct FieldTableGetter<'a>(&'a FieldTable);
+pub struct FieldTableViewer<'a>(&'a FieldTable);
 
-impl<'a> FieldTableGetter<'a> {
+impl<'a> FieldTableViewer<'a> {
     pub fn new(ft: &'a FieldTable) -> Self {
         Self(ft)
     }
@@ -247,6 +247,12 @@ impl<'a> FieldTableGetter<'a> {
     }
 }
 
+impl<'a> From<&'a FieldTable> for FieldTableViewer<'a> {
+    fn from(ft: &'a FieldTable) -> Self {
+        FieldTableViewer(ft)
+    }
+}
+
 // ================================================================================================
 // Retry
 // ================================================================================================
@@ -291,7 +297,7 @@ impl Retry {
         }
 
         // consume 1 retry
-        let retries = FieldTableGetter::new(&headers).x_retries().unwrap() - 1;
+        let retries = FieldTableViewer::new(&headers).x_retries().unwrap() - 1;
 
         if retries > 0 {
             // publish to delayed exchange and ack

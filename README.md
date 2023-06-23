@@ -198,7 +198,3 @@ pub enum CmdArg {
 - [message persistence](./pqx-app/tests/test_persistence.rs): database interaction
 
 - [mq api](./pqx-util/tests/test_mq.rs): RabbitMQ management APIs
-
-## Todo
-
-- impl `consuming_timeout` in `ConsumerWrapper` by `tokio::time::{timeout, Duration}`
