@@ -253,3 +253,12 @@ impl CmdAsyncExecutor {
         Ok(child.wait()?)
     }
 }
+
+impl std::fmt::Debug for CmdAsyncExecutor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CmdAsyncExecutor")
+            .field("stdout_fn", &"Option<Arc<dyn AsyncFn>>")
+            .field("stderr_fn", &"Option<Arc<dyn AsyncFn>>")
+            .finish()
+    }
+}

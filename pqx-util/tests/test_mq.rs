@@ -16,7 +16,7 @@ use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 
 #[tokio::test]
 async fn simple_get() {
-    let cfg: MqClientCfg = read_yaml("conn.yml").unwrap();
+    let cfg: MqApiCfg = read_yaml("conn.yml").unwrap();
 
     let url = &cfg.url;
     let vhost = cfg.vhost.as_deref().unwrap_or("");
@@ -27,7 +27,7 @@ async fn simple_get() {
     );
 
     // client
-    let client = MqClient::new_with_headers(url, vhost, hm);
+    let client = MqApiClient::new_with_headers(url, vhost, hm);
 
     let res = client.get::<_, serde_json::Value>("overview").await;
     assert!(res.is_ok());
@@ -39,8 +39,8 @@ async fn simple_get() {
 // Test MqQuery
 // ================================================================================================
 
-static CLIENT: Lazy<MqClient> =
-    Lazy::new(|| MqClient::new_by_yaml("conn.yml").expect("config file exists"));
+static CLIENT: Lazy<MqApiClient> =
+    Lazy::new(|| MqApiClient::new_by_yaml("conn.yml").expect("config file exists"));
 
 #[tokio::test]
 async fn overview_success() {

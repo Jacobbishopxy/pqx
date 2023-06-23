@@ -7,10 +7,10 @@ use clap::Parser;
 use pqx::amqprs::channel::{ExchangeType, QueueBindArguments};
 use pqx::error::PqxResult;
 use pqx::mq::{FieldTableBuilder, MqClient};
-use pqx::pqx_util::get_cur_dir_file;
-use pqx::pqx_util::{logging_init, read_yaml, PersistClient};
+use pqx::pqx_util::*;
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 use pqx_app::persistence::MessagePersistent;
+use tracing::info;
 
 // ================================================================================================
 // Const
@@ -44,6 +44,25 @@ struct Args {
 // ================================================================================================
 // Fn
 // ================================================================================================
+
+async fn check_tables(client: &PersistClient) -> PqxResult<(bool, bool)> {
+    let db = client.db().expect("connection is established");
+    let mp = MessagePersistent::new(db.clone());
+
+    mp.check_existence().await
+}
+
+async fn check_mq(
+    client: &MqApiClient,
+) -> PqxResult<(serde_json::Value, serde_json::Value, serde_json::Value)> {
+    let query = MqQuery::new(&client);
+
+    let res1 = query.exchanges_with_vhost(client.vhost()).await?;
+    let res2 = query.queues_with_vhost(&client.vhost()).await?;
+    let res3 = query.bindings_with_vhost(&client.vhost()).await?;
+
+    Ok((res1, res2, res3))
+}
 
 async fn declare_exchange_and_queues_then_bind(
     client: &MqClient,
@@ -158,6 +177,8 @@ async fn main() {
     // db client
     let mut db_client = PersistClient::new(config.db);
     db_client.connect().await.unwrap();
+    // mq-api client
+    let api_client = MqApiClient::new(config.mq_api);
 
     // read setup config
     let config_path = get_cur_dir_file(INIT_CONFIG).unwrap();
@@ -166,9 +187,28 @@ async fn main() {
 
     match args.option.as_str() {
         INSP => {
-            // TODO:
-            // check tables exist
-            // check exchanges and queues exist
+            // check tables
+            let res = check_tables(&db_client).await.unwrap();
+
+            info!("{} {:?}", now!(), res);
+
+            // check exchanges, queues and bindings exist
+            let (res1, res2, res3) = check_mq(&api_client).await.unwrap();
+            info!(
+                "{} {:?}",
+                now!(),
+                serde_json::to_string_pretty(&res1).unwrap()
+            );
+            info!(
+                "{} {:?}",
+                now!(),
+                serde_json::to_string_pretty(&res2).unwrap()
+            );
+            info!(
+                "{} {:?}",
+                now!(),
+                serde_json::to_string_pretty(&res3).unwrap()
+            );
         }
         DECL_X => declare_exchange_and_queues_then_bind(&mq_client, &config)
             .await

@@ -57,7 +57,7 @@ impl AsyncConsumer for PqxDefaultConsumer {
 #[derive(Debug)]
 pub enum ConsumerResult<R: Send + Debug> {
     Success(R),
-    Retry(Option<R>), // if timeout, then `None`
+    Retry(Option<R>), // `None` if timeout
     Failure(R),
 }
 

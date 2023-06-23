@@ -45,7 +45,7 @@ fn gen_check_table_exists_stmt(table_name: &str) -> SelectStatement {
 // MessagePersistent
 // ================================================================================================
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MessagePersistent {
     db: DatabaseConnection,
 }

@@ -24,7 +24,7 @@ fn parse_url<T: AsRef<str>>(url: T) -> PqxUtilResult<Url> {
 // ================================================================================================
 
 #[derive(Debug, Deserialize)]
-pub struct MqClientCfg {
+pub struct MqApiCfg {
     pub url: String,
     pub auth: Option<String>,
     pub vhost: Option<String>,
@@ -35,18 +35,32 @@ pub struct MqClientCfg {
 // ================================================================================================
 
 #[derive(Debug)]
-pub struct MqClient {
+pub struct MqApiClient {
     url: String,
     vhost: String,
     client: reqwest::Client,
 }
 
-impl MqClient {
-    pub fn new(url: &str, vhost: &str) -> Self {
+impl MqApiClient {
+    pub fn new(cfg: MqApiCfg) -> Self {
+        let client = match &cfg.auth {
+            Some(auth) => {
+                let cb = ClientBuilder::new();
+                let mut hm = HeaderMap::new();
+                let v = HeaderValue::from_str(auth).unwrap();
+                hm.insert(AUTHORIZATION, v);
+
+                cb.default_headers(hm)
+            }
+            None => ClientBuilder::default(),
+        }
+        .build()
+        .unwrap();
+
         Self {
-            url: url.to_owned(),
-            vhost: vhost.to_owned(),
-            client: ClientBuilder::new().build().expect("build success"),
+            url: cfg.url,
+            vhost: cfg.vhost.unwrap_or(String::from("")),
+            client,
         }
     }
 
@@ -64,7 +78,7 @@ impl MqClient {
     }
 
     pub fn new_by_yaml(path: impl AsRef<str>) -> PqxUtilResult<Self> {
-        let cfg: MqClientCfg = read_yaml(path)?;
+        let cfg: MqApiCfg = read_yaml(path)?;
 
         let c = match cfg.auth {
             Some(ref auth) => {
@@ -87,7 +101,7 @@ impl MqClient {
     }
 
     pub fn new_by_json(path: impl AsRef<str>) -> PqxUtilResult<Self> {
-        let cfg: MqClientCfg = read_json(path)?;
+        let cfg: MqApiCfg = read_json(path)?;
 
         let c = match cfg.auth {
             Some(ref auth) => {
@@ -166,15 +180,15 @@ impl MqClient {
 
 #[derive(Debug)]
 pub struct MqQuery<'a> {
-    client: &'a MqClient,
+    client: &'a MqApiClient,
 }
 
 impl<'a> MqQuery<'a> {
-    pub fn new(client: &'a MqClient) -> Self {
+    pub fn new(client: &'a MqApiClient) -> Self {
         Self { client }
     }
 
-    pub fn client(&self) -> &MqClient {
+    pub fn client(&self) -> &MqApiClient {
         self.client
     }
 
@@ -229,7 +243,7 @@ mod test_client {
     async fn simple_get() {
         let hm = HEADER.clone();
 
-        let client = MqClient::new_with_headers("http://localhost:15672/api", "", hm);
+        let client = MqApiClient::new_with_headers("http://localhost:15672/api", "", hm);
 
         let res = client.get::<_, serde_json::Value>("overview").await;
         assert!(res.is_ok());
