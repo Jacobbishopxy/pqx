@@ -6,5 +6,5 @@
 pub mod adt;
 pub mod cfg;
 pub mod entities;
-pub mod execution;
-pub mod persistence;
+pub mod exec;
+pub mod persist;

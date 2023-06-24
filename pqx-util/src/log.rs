@@ -1,4 +1,4 @@
-//! file: logging.rs
+//! file: log.rs
 //! author: Jacob Xie
 //! date: 2023/06/13 08:14:06 Tuesday
 //! brief:

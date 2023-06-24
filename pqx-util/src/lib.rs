@@ -37,16 +37,16 @@ pub(crate) mod helpers {
 // lib
 // ================================================================================================
 
-pub mod cfg;
 pub mod db;
 pub mod error;
-pub mod logging;
+pub mod log;
+pub mod misc;
 pub mod mq;
 
-pub use cfg::*;
 pub use db::*;
 pub use error::*;
-pub use logging::*;
+pub use log::*;
+pub use misc::*;
 pub use mq::*;
 
 // ================================================================================================

@@ -10,7 +10,7 @@ use pqx::mq::{FieldTableBuilder, MqClient};
 use pqx::{pqx_custom_err, pqx_util::*};
 use pqx_app::adt::{BindingInfo, ExchangeInfo, QueueInfo};
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
-use pqx_app::persistence::MessagePersistent;
+use pqx_app::persist::MessagePersistent;
 use tracing::info;
 
 // ================================================================================================

@@ -1,4 +1,4 @@
-//! file: cfg.rs
+//! file: misc.rs
 //! author: Jacob Xie
 //! date: 2023/06/04 09:19:42 Sunday
 //! brief:

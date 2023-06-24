@@ -8,7 +8,7 @@ use pqx::ec::CmdArg;
 use pqx::pqx_util::{get_cur_dir_file, read_yaml, PersistClient, PersistConn};
 use pqx_app::adt::{Command, ExecutionResult};
 use pqx_app::cfg::ConnectionsConfig;
-use pqx_app::persistence::MessagePersistent;
+use pqx_app::persist::MessagePersistent;
 
 // ================================================================================================
 // static

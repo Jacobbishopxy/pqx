@@ -10,8 +10,8 @@ use pqx::error::PqxResult;
 use pqx::mq::{MqClient, Subscriber};
 use pqx::pqx_util::*;
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
-use pqx_app::execution::Executor;
-use pqx_app::persistence::MessagePersistent;
+use pqx_app::exec::Executor;
+use pqx_app::persist::MessagePersistent;
 use tracing::{error, info, instrument};
 
 // ================================================================================================
@@ -47,7 +47,9 @@ pub async fn logging_error(s: String) -> PqxResult<()> {
 
 #[derive(Debug, Parser)]
 struct Args {
-    que: String,
+    #[arg(short, long)]
+    queue: String, // which queue to subscribe
+    config: Option<String>,
 }
 
 // ================================================================================================
@@ -80,7 +82,7 @@ async fn main() {
     let mp = MessagePersistent::new(ps.db.unwrap());
 
     // setup consumer
-    let mut consumer = Executor::new(init_config.delayed_exchange, mp);
+    let mut consumer = Executor::new(init_config.header_exchange, mp);
     consumer
         .exec_mut()
         .register_stdout_fn(Arc::new(logging_info))
@@ -92,7 +94,7 @@ async fn main() {
     subscriber.set_consumer_prefetch(0, 1, false).await.unwrap();
 
     // start consume
-    subscriber.consume(&args.que).await.unwrap();
+    subscriber.consume(&args.queue).await.unwrap();
 
     // block until fail
     subscriber.soft_fail_block().await;

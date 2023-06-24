@@ -1,4 +1,4 @@
-//! file: execution.rs
+//! file: exec.rs
 //! author: Jacob Xie
 //! date: 2023/06/13 08:50:37 Tuesday
 //! brief:
@@ -13,7 +13,7 @@ use pqx::pqx_util::now;
 use tracing::{debug, instrument};
 
 use crate::adt::{Command, ExecutionResult};
-use crate::persistence::MessagePersistent;
+use crate::persist::MessagePersistent;
 
 // ================================================================================================
 // Executor
