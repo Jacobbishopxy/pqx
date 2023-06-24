@@ -58,7 +58,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX);
+    let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
 
     // read connection config
     let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();

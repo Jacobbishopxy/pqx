@@ -46,3 +46,10 @@ impl From<&'static str> for PqxError {
         PqxError::Custom(e)
     }
 }
+
+#[macro_export]
+macro_rules! pqx_custom_err {
+    ($e: expr) => {
+        ::pqx::error::PqxError::custom($e)
+    };
+}

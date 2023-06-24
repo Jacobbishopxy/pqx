@@ -13,10 +13,10 @@ tree:
 facilities-build:
 	cd docker/facilities && ./build.sh
 
-facilities-start:
-	cd docker/facilities && docker-compose up -d
+facilities-setup:
+	cd docker/facilities && ./setup.sh
 
-facilities-remove:
+facilities-stop:
 	cd docker/facilities && docker-compose down
 
 # ////////////////////////////////////////////////////////////////////////////////////////////////

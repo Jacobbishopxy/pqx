@@ -137,7 +137,6 @@ pub enum CmdArg {
 │       ├── cfg.rs
 │       ├── execution.rs
 │       ├── lib.rs
-│       ├── mq_surveillance.rs
 │       └── persistence.rs
 ├── pqx-util
 │   └── src
@@ -160,7 +159,7 @@ pub enum CmdArg {
 
 1. Build image for RabbitMQ (including plugins): `make facilities-build`
 
-1. Make sure RabbitMQ and PostgreSQL has been started, simply by executing `make facilities-start`. Check [docker-compose](./docker/facilities/docker-compose.yml) for composing detail.
+1. Make sure RabbitMQ and PostgreSQL has been started, simply by executing `make facilities-setup`. Check [docker-compose](./docker/facilities/docker-compose.yml) for composing detail.
 
 1. Add RabbitMQ user: `make mq-adduser`; for supervisor role (enable website operation): `make mq-supervisor`
 
@@ -174,7 +173,11 @@ pub enum CmdArg {
 
 1. Follow the template files under `./docker/server/config`, create config files: `conn.yml` & `init.yml`.
 
-1. Run a Pqx container: `make pqx-setup`
+1. Build and run a Pqx container: `make pqx-build` then `make pqx-setup`
+
+1. Check container & initialization's availability: `docker exec pqx-dev initiator -o insp`
+
+1. Create tables for message persistence and declare exchanges, queues and bindings: `docker exec pqx-dev initiator -o init`
 
 ## Test cases
 

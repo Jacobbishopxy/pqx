@@ -7,7 +7,8 @@ use clap::Parser;
 use pqx::amqprs::channel::{ExchangeType, QueueBindArguments};
 use pqx::error::PqxResult;
 use pqx::mq::{FieldTableBuilder, MqClient};
-use pqx::pqx_util::*;
+use pqx::{pqx_custom_err, pqx_util::*};
+use pqx_app::adt::{BindingInfo, ExchangeInfo, QueueInfo};
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 use pqx_app::persistence::MessagePersistent;
 use tracing::info;
@@ -22,7 +23,7 @@ const DECL_X: &str = "decl_x";
 const DECL_DX: &str = "decl_dx";
 const DECL_DLX: &str = "decl_dlx";
 const CRT_TBL: &str = "crt_tbl";
-const DECL_ALL: &str = "decl_all";
+const INIT: &str = "init";
 
 // default constants
 const LOGGING_DIR: &str = "./logs";
@@ -54,12 +55,33 @@ async fn check_tables(client: &PersistClient) -> PqxResult<(bool, bool)> {
 
 async fn check_mq(
     client: &MqApiClient,
-) -> PqxResult<(serde_json::Value, serde_json::Value, serde_json::Value)> {
+) -> PqxResult<(Vec<ExchangeInfo>, Vec<QueueInfo>, Vec<BindingInfo>)> {
     let query = MqQuery::new(&client);
 
-    let res1 = query.exchanges_with_vhost(client.vhost()).await?;
-    let res2 = query.queues_with_vhost(&client.vhost()).await?;
-    let res3 = query.bindings_with_vhost(&client.vhost()).await?;
+    let res1 = query
+        .exchanges_with_vhost(client.vhost())
+        .await?
+        .as_array()
+        .ok_or(pqx_custom_err!("array"))?
+        .into_iter()
+        .map(ExchangeInfo::try_from)
+        .collect::<PqxResult<Vec<_>>>()?;
+    let res2 = query
+        .queues_with_vhost(&client.vhost())
+        .await?
+        .as_array()
+        .ok_or(pqx_custom_err!("array"))?
+        .into_iter()
+        .map(QueueInfo::try_from)
+        .collect::<PqxResult<Vec<_>>>()?;
+    let res3 = query
+        .bindings_with_vhost(&client.vhost())
+        .await?
+        .as_array()
+        .ok_or(pqx_custom_err!("array"))?
+        .into_iter()
+        .map(BindingInfo::try_from)
+        .collect::<PqxResult<Vec<_>>>()?;
 
     Ok((res1, res2, res3))
 }
@@ -136,13 +158,11 @@ async fn declare_dead_letter_exchange_and_bind_queues(
     Ok(())
 }
 
-async fn create_table(client: &PersistClient) -> PqxResult<()> {
+async fn create_table(client: &PersistClient) {
     let db = client.db().expect("connection is established");
     let mp = MessagePersistent::new(db.clone());
 
-    mp.create_table().await?;
-
-    Ok(())
+    mp.create_table().await;
 }
 
 // ================================================================================================
@@ -189,8 +209,12 @@ async fn main() {
         INSP => {
             // check tables
             let res = check_tables(&db_client).await.unwrap();
-
-            info!("{} {:?}", now!(), res);
+            info!(
+                "{} table existence > message_history: {}, message_result: {}",
+                now!(),
+                res.0,
+                res.1
+            );
 
             // check exchanges, queues and bindings exist
             let (res1, res2, res3) = check_mq(&api_client).await.unwrap();
@@ -207,8 +231,8 @@ async fn main() {
         DECL_DLX => declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
             .await
             .unwrap(),
-        CRT_TBL => create_table(&db_client).await.unwrap(),
-        DECL_ALL => {
+        CRT_TBL => create_table(&db_client).await,
+        INIT => {
             declare_exchange_and_queues_then_bind(&mq_client, &config)
                 .await
                 .unwrap();
@@ -218,7 +242,7 @@ async fn main() {
             declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
                 .await
                 .unwrap();
-            create_table(&db_client).await.unwrap();
+            create_table(&db_client).await;
         }
         _ => panic!("undefined option"),
     }

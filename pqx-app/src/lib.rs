@@ -7,5 +7,4 @@ pub mod adt;
 pub mod cfg;
 pub mod entities;
 pub mod execution;
-pub mod mq_surveillance;
 pub mod persistence;

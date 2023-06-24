@@ -29,17 +29,17 @@ pub struct MqConn {
 }
 
 // ================================================================================================
-// QueueInfo
+// SimpleQueueInfo
 // ================================================================================================
 
 #[derive(Debug)]
-pub struct QueueInfo {
+pub struct SimpleQueueInfo {
     pub name: String,
     pub message_count: u32,
     pub consumer_count: u32,
 }
 
-impl QueueInfo {
+impl SimpleQueueInfo {
     pub fn new(name: String, message_count: u32, consumer_count: u32) -> Self {
         Self {
             name,
@@ -269,7 +269,7 @@ impl MqClient {
         exchange: &str,
         rout: &str,
         que: &str,
-    ) -> PqxResult<QueueInfo> {
+    ) -> PqxResult<SimpleQueueInfo> {
         let chan = get_channel!(self)?;
 
         let (name, message_count, consumer_count) = chan
@@ -280,7 +280,7 @@ impl MqClient {
         chan.queue_bind(QueueBindArguments::new(que, exchange, rout))
             .await?;
 
-        Ok(QueueInfo::new(name, message_count, consumer_count))
+        Ok(SimpleQueueInfo::new(name, message_count, consumer_count))
     }
 
     pub async fn declare_queue_with_dlx(

@@ -3,13 +3,17 @@
 //! date: 2023/06/12 21:12:55 Monday
 //! brief:
 
+use std::collections::HashMap;
+
 use chrono::Local;
 use pqx::amqprs::{FieldTable, FieldValue};
 use pqx::ec::CmdArg;
 use pqx::error::PqxError;
 use pqx::mq::{X_CONSUME_TTL, X_DELAY, X_MESSAGE_TTL, X_RETRIES};
+use pqx::pqx_custom_err;
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::entities::{message_history, message_result};
 
@@ -166,4 +170,229 @@ impl From<message_result::Model> for ExecutionResult {
 // Inspection result
 // ================================================================================================
 
-// TODO
+#[derive(Debug)]
+pub struct ExchangeInfo {
+    pub name: String,
+    pub exchange_type: String,
+    pub auto_delete: bool,
+    pub durable: bool,
+    pub internal: bool,
+    pub vhost: String,
+    pub arguments: HashMap<String, Value>,
+}
+
+#[derive(Debug)]
+pub struct QueueInfo {
+    pub name: String,
+    pub queue_type: String,
+    pub state: String,
+    pub vhost: String,
+    pub consumers: i64,
+    pub consumer_capacity: i64,
+    pub consumer_utilisation: i64,
+    pub exclusive: bool,
+    pub durable: bool,
+    pub arguments: HashMap<String, Value>,
+}
+
+#[derive(Debug)]
+pub struct BindingInfo {
+    pub source: String,
+    pub destination: String,
+    pub destination_type: String,
+    pub properties_key: String,
+    pub routing_key: String,
+    pub arguments: HashMap<String, Value>,
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+impl<'a> TryFrom<&'a Value> for ExchangeInfo {
+    type Error = PqxError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        let object = value.as_object().ok_or(pqx_custom_err!("ExchangeInfo"))?;
+
+        let name = object
+            .get("name")
+            .ok_or(pqx_custom_err!("name"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let exchange_type = object
+            .get("type")
+            .ok_or(pqx_custom_err!("type"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let auto_delete = object
+            .get("auto_delete")
+            .ok_or(pqx_custom_err!("auto_delete"))?
+            .as_bool()
+            .ok_or(pqx_custom_err!("bool"))?;
+        let durable = object
+            .get("durable")
+            .ok_or(pqx_custom_err!("durable"))?
+            .as_bool()
+            .ok_or(pqx_custom_err!("bool"))?;
+        let internal = object
+            .get("internal")
+            .ok_or(pqx_custom_err!("internal"))?
+            .as_bool()
+            .ok_or(pqx_custom_err!("bool"))?;
+        let vhost = object
+            .get("vhost")
+            .ok_or(pqx_custom_err!("vhost"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let arguments: HashMap<String, Value> = serde_json::from_value(
+            object
+                .get("arguments")
+                .ok_or(pqx_custom_err!("arguments"))?
+                .clone(),
+        )?;
+
+        Ok(Self {
+            name,
+            exchange_type,
+            auto_delete,
+            durable,
+            internal,
+            vhost,
+            arguments,
+        })
+    }
+}
+
+impl<'a> TryFrom<&'a Value> for QueueInfo {
+    type Error = PqxError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        let object = value.as_object().ok_or(pqx_custom_err!("QueueInfo"))?;
+
+        let name = object
+            .get("name")
+            .ok_or(pqx_custom_err!("name"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let queue_type = object
+            .get("type")
+            .ok_or(pqx_custom_err!("type"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let state = object
+            .get("state")
+            .ok_or(pqx_custom_err!("state"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let vhost = object
+            .get("vhost")
+            .ok_or(pqx_custom_err!("vhost"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("str"))?
+            .to_owned();
+        let consumers = object
+            .get("consumers")
+            .ok_or(pqx_custom_err!("consumers"))?
+            .as_i64()
+            .ok_or(pqx_custom_err!("i64"))?;
+        let consumer_capacity = object
+            .get("consumer_capacity")
+            .ok_or(pqx_custom_err!("consumer_capacity"))?
+            .as_i64()
+            .ok_or(pqx_custom_err!("i64"))?;
+        let consumer_utilisation = object
+            .get("consumer_utilisation")
+            .ok_or(pqx_custom_err!("consumer_utilisation"))?
+            .as_i64()
+            .ok_or(pqx_custom_err!("i64"))?;
+        let exclusive = object
+            .get("exclusive")
+            .ok_or(pqx_custom_err!("exclusive"))?
+            .as_bool()
+            .ok_or(pqx_custom_err!("bool"))?
+            .to_owned();
+        let durable = object
+            .get("durable")
+            .ok_or(pqx_custom_err!("durable"))?
+            .as_bool()
+            .ok_or(pqx_custom_err!("bool"))?
+            .to_owned();
+        let arguments: HashMap<String, Value> = serde_json::from_value(
+            object
+                .get("arguments")
+                .ok_or(pqx_custom_err!("arguments"))?
+                .clone(),
+        )?;
+
+        Ok(Self {
+            name,
+            queue_type,
+            state,
+            vhost,
+            consumers,
+            consumer_capacity,
+            consumer_utilisation,
+            exclusive,
+            durable,
+            arguments,
+        })
+    }
+}
+
+impl<'a> TryFrom<&'a Value> for BindingInfo {
+    type Error = PqxError;
+
+    fn try_from(value: &'a Value) -> Result<Self, Self::Error> {
+        let object = value.as_object().ok_or(pqx_custom_err!("QueueInfo"))?;
+        let source = object
+            .get("source")
+            .ok_or(pqx_custom_err!("source"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("source"))?
+            .to_owned();
+        let destination = object
+            .get("destination")
+            .ok_or(pqx_custom_err!("destination"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("destination"))?
+            .to_owned();
+        let destination_type = object
+            .get("destination_type")
+            .ok_or(pqx_custom_err!("destination_type"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("destination_type"))?
+            .to_owned();
+        let properties_key = object
+            .get("properties_key")
+            .ok_or(pqx_custom_err!("properties_key"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("properties_key"))?
+            .to_owned();
+        let routing_key = object
+            .get("routing_key")
+            .ok_or(pqx_custom_err!("routing_key"))?
+            .as_str()
+            .ok_or(pqx_custom_err!("routing_key"))?
+            .to_owned();
+        let arguments: HashMap<String, Value> = serde_json::from_value(
+            object
+                .get("arguments")
+                .ok_or(pqx_custom_err!("arguments"))?
+                .clone(),
+        )?;
+
+        Ok(Self {
+            source,
+            destination,
+            destination_type,
+            properties_key,
+            routing_key,
+            arguments,
+        })
+    }
+}

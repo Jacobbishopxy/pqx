@@ -83,19 +83,17 @@ impl<'a> MessagePersistent {
         Ok((res1, res2))
     }
 
-    pub async fn create_table(&self) -> PqxResult<()> {
+    pub async fn create_table(&self) {
         let builder = self.db.get_database_backend();
         let schema = Schema::new(builder);
 
         // create message_history table
         let stmt = builder.build(&schema.create_table_from_entity(message_history::Entity));
-        self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
+        let _ = self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm);
 
         // create message_result table
         let stmt = builder.build(&schema.create_table_from_entity(message_result::Entity));
-        self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm)?;
-
-        Ok(())
+        let _ = self.db.execute(stmt).await.map_err(PqxUtilError::SeaOrm);
     }
 
     pub async fn drop_table(&self) -> PqxResult<()> {
