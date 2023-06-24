@@ -18,12 +18,25 @@ use serde_json::Value;
 use crate::entities::{message_history, message_result};
 
 // ================================================================================================
-// Command
+// MailingTo & Command
 // ================================================================================================
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum MailingTo {
+    Any(HashMap<String, String>),
+    All(HashMap<String, String>),
+}
+
+impl Default for MailingTo {
+    fn default() -> Self {
+        Self::Any(HashMap::new())
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Command {
-    pub consumer_ids: Vec<String>,
+    pub mailing_to: MailingTo,
     pub retry: Option<u8>,
     pub poke: Option<u16>,
     pub waiting_timeout: Option<u32>,
@@ -34,7 +47,7 @@ pub struct Command {
 impl Command {
     pub fn new(cmd: CmdArg) -> Self {
         Self {
-            consumer_ids: vec![],
+            mailing_to: MailingTo::default(),
             retry: None,
             poke: None,
             waiting_timeout: None,
@@ -86,7 +99,7 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
 
     fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
         let am = message_history::ActiveModel {
-            consumer_ids: Set(cmd.consumer_ids.join(",")),
+            mailing_to: Set(serde_json::json!(cmd.mailing_to)),
             retry: Set(cmd.retry.map(i16::from)),
             poke: Set(cmd.poke.map(i32::from)),
             waiting_timeout: Set(cmd.waiting_timeout.map(i64::from)),
@@ -105,11 +118,7 @@ impl TryFrom<message_history::Model> for Command {
 
     fn try_from(m: message_history::Model) -> Result<Self, Self::Error> {
         let res = Self {
-            consumer_ids: m
-                .consumer_ids
-                .split(",")
-                .map(String::from)
-                .collect::<Vec<_>>(),
+            mailing_to: serde_json::from_value(m.mailing_to)?,
             retry: m.retry.map(u8::try_from).transpose()?,
             poke: m.poke.map(u16::try_from).transpose()?,
             waiting_timeout: m.waiting_timeout.map(u32::try_from).transpose()?,

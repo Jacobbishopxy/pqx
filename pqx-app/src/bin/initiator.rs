@@ -32,7 +32,7 @@ const CONN_CONFIG: &str = "conn.yml";
 const INIT_CONFIG: &str = "init.yml";
 
 // ================================================================================================
-// Cfg & Args
+// Args
 // ================================================================================================
 
 #[derive(Debug, Parser)]
@@ -179,7 +179,7 @@ async fn create_table(client: &PersistClient) {
 /// 5. cargo run --bin initiator -- -o crt_tbl
 /// 6. cargo run --bin initiator -- -o all
 ///
-#[tokio::main(flavor = "multi_thread")]
+#[tokio::main]
 async fn main() {
     let args = Args::parse();
 

@@ -91,7 +91,7 @@ where
     // Ok(Retry(R)) => handle_retry
     // Ok(Failure(R)) => handle_requeue
     // Err(_) => handle_discard
-    async fn consume(&mut self, content: &M) -> PqxResult<ConsumerResult<R>>;
+    async fn consume(&mut self, message: &M) -> PqxResult<ConsumerResult<R>>;
 
     // [IMPORTANT] no need to override this method unless [`retry`] has been used in code,
     #[allow(unused_variables)]

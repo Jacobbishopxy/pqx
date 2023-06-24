@@ -2,14 +2,6 @@
 //! author: Jacob Xie
 //! date: 2023/05/26 23:55:05 Friday
 //!
-//! Subscriber methods:
-//! 1. set_consume_args
-//! 2. set_consumer_prefetch
-//! 3. set_consumer_priorities
-//! 4. set_consumer_timeout
-//! 5. consume
-//! 6. cancel_consume
-//! 7. block
 
 use std::fmt::Debug;
 use std::marker::PhantomData;

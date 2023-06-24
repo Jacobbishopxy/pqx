@@ -47,8 +47,8 @@ impl Executor {
 #[async_trait]
 impl Consumer<Command, ExitStatus> for Executor {
     #[instrument]
-    async fn consume(&mut self, content: &Command) -> PqxResult<ConsumerResult<ExitStatus>> {
-        let es = self.exec.exec(1, content.cmd()).await?;
+    async fn consume(&mut self, message: &Command) -> PqxResult<ConsumerResult<ExitStatus>> {
+        let es = self.exec.exec(1, message.cmd()).await?;
         let res = if es.success() {
             ConsumerResult::success(es)
         } else {

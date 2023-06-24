@@ -14,7 +14,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,
-    pub consumer_ids: String,
+    pub mailing_to: Json,
     #[sea_orm(nullable)]
     pub retry: Option<i16>,
     #[sea_orm(nullable)]
