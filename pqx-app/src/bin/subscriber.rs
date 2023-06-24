@@ -8,8 +8,7 @@ use std::sync::Arc;
 use clap::Parser;
 use pqx::error::PqxResult;
 use pqx::mq::{MqClient, Subscriber};
-use pqx::pqx_util::get_cur_dir_file;
-use pqx::pqx_util::{logging_init, now, read_yaml, PersistClient};
+use pqx::pqx_util::*;
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 use pqx_app::execution::Executor;
 use pqx_app::persistence::MessagePersistent;
@@ -59,7 +58,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    logging_init!(LOGGING_DIR, FILENAME_PREFIX, INFO);
+    let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX);
 
     // read connection config
     let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();
@@ -77,7 +76,7 @@ async fn main() {
 
     // setup db
     let mut ps = PersistClient::new(conn_config.db);
-    ps.connect().await.unwrap();
+    ps.with_sqlx_logging(false).connect().await.unwrap();
     let mp = MessagePersistent::new(ps.db.unwrap());
 
     // setup consumer

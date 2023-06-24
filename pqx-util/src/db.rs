@@ -75,6 +75,12 @@ impl PersistClient {
         self.db.as_ref()
     }
 
+    pub fn with_sqlx_logging(&mut self, enable: bool) -> &mut Self {
+        self.conn.sqlx_logging(enable);
+
+        self
+    }
+
     pub fn with_max_connection(&mut self, size: u32) -> &mut Self {
         self.conn.max_connections(size);
 

@@ -3,8 +3,8 @@
 # @date:	2023/06/24 00:26:36 Saturday
 # @brief:
 
-source ../.env
+# source ../.env
 
-docker network create $INTERNAL_NETWORK
+# docker network create $INTERNAL_NETWORK
 docker-compose down
 docker-compose up -d

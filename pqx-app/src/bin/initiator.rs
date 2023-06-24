@@ -163,7 +163,7 @@ async fn create_table(client: &PersistClient) -> PqxResult<()> {
 async fn main() {
     let args = Args::parse();
 
-    logging_init!(LOGGING_DIR, FILENAME_PREFIX, INFO);
+    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
 
     // read connection config
     let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();
@@ -176,7 +176,7 @@ async fn main() {
     mq_client.open_channel(None).await.unwrap();
     // db client
     let mut db_client = PersistClient::new(config.db);
-    db_client.connect().await.unwrap();
+    db_client.with_sqlx_logging(false).connect().await.unwrap();
     // mq-api client
     let api_client = MqApiClient::new(config.mq_api);
 
@@ -194,21 +194,9 @@ async fn main() {
 
             // check exchanges, queues and bindings exist
             let (res1, res2, res3) = check_mq(&api_client).await.unwrap();
-            info!(
-                "{} {:?}",
-                now!(),
-                serde_json::to_string_pretty(&res1).unwrap()
-            );
-            info!(
-                "{} {:?}",
-                now!(),
-                serde_json::to_string_pretty(&res2).unwrap()
-            );
-            info!(
-                "{} {:?}",
-                now!(),
-                serde_json::to_string_pretty(&res3).unwrap()
-            );
+            info!("{} {:?}", now!(), &res1);
+            info!("{} {:?}", now!(), &res2);
+            info!("{} {:?}", now!(), &res3);
         }
         DECL_X => declare_exchange_and_queues_then_bind(&mq_client, &config)
             .await
