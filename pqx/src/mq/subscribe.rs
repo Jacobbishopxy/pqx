@@ -49,13 +49,48 @@ where
     }
 
     impl_set_consume_args!();
-    impl_set_consumer_prefetch!();
+    impl_set_consumer_exclusive!();
+    impl_set_consumer_no_wait!();
     impl_set_consumer_priorities!();
     impl_set_consumer_timeout!();
+
+    impl_set_prefetch!();
     impl_recover!();
-    impl_consume!();
-    impl_cancel_consume!();
     impl_block!();
+
+    pub async fn consume(&mut self, que: &str) -> PqxResult<()> {
+        let consumer = self.consumer.clone();
+
+        let args = self
+            .consume_args
+            .take()
+            .unwrap()
+            .queue(que.to_owned())
+            .finish();
+
+        // start to consume
+        let consumer_tag = self.channel.basic_consume(consumer, args).await?;
+        // save consumer tag
+        self.consumer_tag = Some(consumer_tag);
+
+        Ok(())
+    }
+
+    pub async fn cancel_consume(&mut self, no_wait: bool) -> crate::error::PqxResult<()> {
+        let consumer_tag = if let Some(ct) = self.consumer_tag.take() {
+            ct
+        } else {
+            return Err("consumer tag is empty, check whether consuming starts".into());
+        };
+        let args = ::amqprs::channel::BasicCancelArguments {
+            consumer_tag,
+            no_wait,
+        };
+
+        self.channel.basic_cancel(args).await?;
+
+        Ok(())
+    }
 }
 
 // ================================================================================================
@@ -94,9 +129,12 @@ where
     }
 
     impl_set_consume_args!();
-    impl_set_consumer_prefetch!();
     impl_set_consumer_priorities!();
     impl_set_consumer_timeout!();
+    impl_set_consumer_exclusive!();
+    impl_set_consumer_no_wait!();
+
+    impl_set_prefetch!();
     impl_recover!();
     impl_block!();
 

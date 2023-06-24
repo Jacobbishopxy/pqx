@@ -49,7 +49,8 @@ pub async fn logging_error(s: String) -> PqxResult<()> {
 struct Args {
     #[arg(short, long)]
     queue: String, // which queue to subscribe
-    config: Option<String>,
+    exclusive: Option<bool>, // whether is a exclusive consumer
+    config: Option<String>,  // config file path
 }
 
 // ================================================================================================
@@ -91,7 +92,7 @@ async fn main() {
     // setup subscriber
     let chan = mq.channel().unwrap();
     let mut subscriber = Subscriber::new(chan, consumer);
-    subscriber.set_consumer_prefetch(0, 1, false).await.unwrap();
+    subscriber.set_prefetch(0, 1, false).await.unwrap();
 
     // start consume
     subscriber.consume(&args.queue).await.unwrap();

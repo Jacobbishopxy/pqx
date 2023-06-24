@@ -135,16 +135,16 @@ pub enum CmdArg {
 │       │   └── mod.rs
 │       ├── adt.rs
 │       ├── cfg.rs
-│       ├── execution.rs
+│       ├── exec.rs
 │       ├── lib.rs
-│       └── persistence.rs
+│       └── persist.rs
 ├── pqx-util
 │   └── src
-│       ├── cfg.rs
 │       ├── db.rs
 │       ├── error.rs
 │       ├── lib.rs
-│       ├── logging.rs
+│       ├── log.rs
+│       ├── misc.rs
 │       └── mq.rs
 └── LICENSE
 ```
@@ -202,3 +202,7 @@ pub enum CmdArg {
 - [message persistence](./pqx-app/tests/test_persistence.rs): database interaction
 
 - [mq api](./pqx-util/tests/test_mq.rs): RabbitMQ management APIs
+
+## Todo
+
+- By using header-exchange, we are able to play with more complicated message delivery. Hence a flexible `Command` is required.

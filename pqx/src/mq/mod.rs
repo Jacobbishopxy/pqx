@@ -44,29 +44,9 @@ macro_rules! impl_set_consume_args {
     };
 }
 
-macro_rules! impl_set_consumer_prefetch {
-    () => {
-        pub async fn set_consumer_prefetch(
-            &self,
-            size: u32,
-            count: u16,
-            global: bool,
-        ) -> crate::error::PqxResult<()> {
-            let args = ::amqprs::channel::BasicQosArguments::new(size, count, global);
-
-            self.channel.basic_qos(args).await?;
-
-            Ok(())
-        }
-    };
-}
-
 macro_rules! impl_set_consumer_priorities {
     () => {
-        pub async fn set_consumer_priorities(
-            &mut self,
-            priority: i16,
-        ) -> crate::error::PqxResult<()> {
+        pub fn set_consumer_priorities(&mut self, priority: i16) {
             let x_priority = ::amqprs::FieldName::try_from("x-priority").unwrap();
 
             // no matter whether "x-priority" exists, remove it and insert a new one
@@ -81,8 +61,6 @@ macro_rules! impl_set_consumer_priorities {
                 .unwrap()
                 .arguments
                 .insert(x_priority, ::amqprs::FieldValue::s(priority));
-
-            Ok(())
         }
     };
 }
@@ -90,7 +68,7 @@ macro_rules! impl_set_consumer_priorities {
 // Starting with RabbitMQ 3.12, the timeout value can also be configured per-queue.
 macro_rules! impl_set_consumer_timeout {
     () => {
-        pub async fn set_consumer_timeout(&mut self, timeout: u32) -> crate::error::PqxResult<()> {
+        pub fn set_consumer_timeout(&mut self, timeout: u32) {
             let x_consumer_timeout = ::amqprs::FieldName::try_from("x-consumer-timeout").unwrap();
 
             self.consume_args
@@ -104,6 +82,45 @@ macro_rules! impl_set_consumer_timeout {
                 .unwrap()
                 .arguments
                 .insert(x_consumer_timeout, ::amqprs::FieldValue::i(timeout));
+        }
+    };
+}
+
+macro_rules! impl_set_consumer_exclusive {
+    () => {
+        pub fn set_consumer_exclusive(&mut self, exclusive: bool) {
+            self.consume_args.as_mut().unwrap().exclusive(exclusive);
+        }
+    };
+}
+
+macro_rules! impl_set_consumer_no_wait {
+    () => {
+        pub fn set_consumer_no_wait(&mut self, no_wait: bool) {
+            self.consume_args.as_mut().unwrap().no_wait(no_wait);
+        }
+    };
+}
+
+pub(crate) use impl_set_consume_args;
+pub(crate) use impl_set_consumer_exclusive;
+pub(crate) use impl_set_consumer_no_wait;
+pub(crate) use impl_set_consumer_priorities;
+pub(crate) use impl_set_consumer_timeout;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro_rules! impl_set_prefetch {
+    () => {
+        pub async fn set_prefetch(
+            &self,
+            size: u32,
+            count: u16,
+            global: bool,
+        ) -> crate::error::PqxResult<()> {
+            let args = ::amqprs::channel::BasicQosArguments::new(size, count, global);
+
+            self.channel.basic_qos(args).await?;
 
             Ok(())
         }
@@ -114,48 +131,6 @@ macro_rules! impl_recover {
     () => {
         pub async fn recover(&self, requeue: bool) -> crate::error::PqxResult<()> {
             self.channel.basic_recover(requeue).await?;
-
-            Ok(())
-        }
-    };
-}
-
-macro_rules! impl_consume {
-    () => {
-        pub async fn consume(&mut self, que: &str) -> crate::error::PqxResult<()> {
-            let consumer = self.consumer.clone();
-
-            let args = self
-                .consume_args
-                .take()
-                .unwrap()
-                .queue(que.to_owned())
-                .finish();
-
-            // start to consume
-            let consumer_tag = self.channel.basic_consume(consumer, args).await?;
-            // save consumer tag
-            self.consumer_tag = Some(consumer_tag);
-
-            Ok(())
-        }
-    };
-}
-
-macro_rules! impl_cancel_consume {
-    () => {
-        pub async fn cancel_consume(&mut self, no_wait: bool) -> crate::error::PqxResult<()> {
-            let consumer_tag = if let Some(ct) = self.consumer_tag.take() {
-                ct
-            } else {
-                return Err("consumer tag is empty, check whether consuming starts".into());
-            };
-            let args = ::amqprs::channel::BasicCancelArguments {
-                consumer_tag,
-                no_wait,
-            };
-
-            self.channel.basic_cancel(args).await?;
 
             Ok(())
         }
@@ -173,12 +148,7 @@ macro_rules! impl_block {
 }
 
 pub(crate) use impl_block;
-pub(crate) use impl_cancel_consume;
-pub(crate) use impl_consume;
 pub(crate) use impl_recover;
-pub(crate) use impl_set_consume_args;
-pub(crate) use impl_set_consumer_prefetch;
-pub(crate) use impl_set_consumer_priorities;
-pub(crate) use impl_set_consumer_timeout;
+pub(crate) use impl_set_prefetch;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

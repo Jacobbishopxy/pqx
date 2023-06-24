@@ -152,7 +152,7 @@ async fn mq_subscriber_success() {
 
     // 5. new subscriber, and set `prefetch` to 1
     let mut subscriber = Subscriber::new(client.channel().unwrap(), consumer);
-    let res = subscriber.set_consumer_prefetch(0, 1, false).await;
+    let res = subscriber.set_prefetch(0, 1, false).await;
     assert!(res.is_ok());
 
     // 6. consume
