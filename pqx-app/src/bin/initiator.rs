@@ -7,7 +7,8 @@ use clap::Parser;
 use pqx::amqprs::channel::{ExchangeType, QueueBindArguments};
 use pqx::error::PqxResult;
 use pqx::mq::{FieldTableBuilder, MqClient};
-use pqx::{pqx_custom_err, pqx_util::*};
+use pqx::pqx_custom_err;
+use pqx::pqx_util::*;
 use pqx_app::adt::{BindingInfo, ExchangeInfo, QueueInfo};
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
 use pqx_app::persist::MessagePersistent;
@@ -185,6 +186,8 @@ async fn main() {
 
     let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
 
+    info!("{} Start initiator... 🫨", now!());
+
     // read connection config
     let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();
     let config_path = config_path.to_string_lossy();
@@ -207,6 +210,7 @@ async fn main() {
 
     match args.option.as_str() {
         INSP => {
+            info!("{} INSP", now!());
             // check tables
             let res = check_tables(&db_client).await.unwrap();
             info!(
@@ -222,17 +226,34 @@ async fn main() {
             info!("{} {:?}", now!(), &res2);
             info!("{} {:?}", now!(), &res3);
         }
-        DECL_X => declare_exchange_and_queues_then_bind(&mq_client, &config)
-            .await
-            .unwrap(),
-        DECL_DX => declare_delayed_exchange_and_bind_queues(&mq_client, &config)
-            .await
-            .unwrap(),
-        DECL_DLX => declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
-            .await
-            .unwrap(),
-        CRT_TBL => create_table(&db_client).await,
+        DECL_X => {
+            info!("{} DECL_X", now!());
+            declare_exchange_and_queues_then_bind(&mq_client, &config)
+                .await
+                .unwrap();
+        }
+        DECL_DX => {
+            info!("{} DECL_DX", now!());
+
+            declare_delayed_exchange_and_bind_queues(&mq_client, &config)
+                .await
+                .unwrap();
+        }
+        DECL_DLX => {
+            info!("{} DECL_DLX", now!());
+
+            declare_dead_letter_exchange_and_bind_queues(&mq_client, &config)
+                .await
+                .unwrap();
+        }
+        CRT_TBL => {
+            info!("{} CRT_TBL", now!());
+
+            create_table(&db_client).await;
+        }
         INIT => {
+            info!("{} INIT", now!());
+
             declare_exchange_and_queues_then_bind(&mq_client, &config)
                 .await
                 .unwrap();
@@ -246,4 +267,6 @@ async fn main() {
         }
         _ => panic!("undefined option"),
     }
+
+    info!("{} Start initiator... 😎", now!());
 }
