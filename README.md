@@ -6,6 +6,8 @@ Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, chec
 
 Bin files provided, currently:
 
+- [inspector](./pqx-app/src/bin/inspector.rs): inspecting database table schemas, MQ settings/status and etc.
+
 - [initiator](./pqx-app/src/bin/initiator.rs): initializing data, such as database tables, MQ settings and etc.
 
 - [rectifier](./pqx-app/src/bin/rectifier.rs): modifying initialized data (delete/recreate/...)
@@ -146,6 +148,8 @@ pub enum CmdArg {
 │   └── src
 │       ├── bin
 │       │   ├── initiator.rs
+│       │   ├── inspector.rs
+│       │   ├── publisher.rs
 │       │   ├── rectifier.rs
 │       │   └── subscriber.rs
 │       ├── entities
@@ -229,5 +233,7 @@ pub enum CmdArg {
 - list all consumers (simply by `MqQuery`)
 
 - flexible `publisher` (not only read task from Json file)
+
+- enhance `Command`, for instance accepting string replacement in `CmdArg`
 
 - Module `dynamic`: dynamically set/del exchange/queue/binding.
