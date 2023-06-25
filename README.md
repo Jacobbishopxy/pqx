@@ -1,6 +1,6 @@
 # PQX
 
-PQX stands for Priority Queue Execution. Inspired by [the official tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-python.html), PQX-APP uses RabbitMQ as the message system, and serves as a RPC client which pulls messages from MQ, deserializes messages and executes commands. PQX-APP can also be placed in different machines in order to execute machine-specified commands (by `MailingTo` field, see below).
+PQX stands for Priority Queue Execution. Inspired by [the official tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-python.html), PQX-APP uses RabbitMQ as the message system, and serves as a RPC client which pulls messages from MQ, deserializes messages and executes commands. PQX-APP can also be placed in different machines in order to execute machine-specified commands (by `mailing_to` field, see below).
 
 Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail.
 
@@ -18,17 +18,15 @@ A full command in Json expression looks like this 🧐:
 
 ```json
 {
-    "mailing_to": {
-        [
-            {
-                "unique_key": "h1",
-            },
-            {
-                "unique_key": "h2",
-                "common_key": "dev"
-            }
-        ]
-    },
+    "mailing_to": [
+        {
+            "unique_key": "h1",
+        },
+        {
+            "unique_key": "h2",
+            "common_key": "dev"
+        }
+    ],
     "retry": 5,
     "poke": 60,
     "waiting_timeout": 180,
