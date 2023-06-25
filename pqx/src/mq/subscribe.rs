@@ -4,7 +4,6 @@
 //!
 
 use std::fmt::Debug;
-use std::marker::PhantomData;
 
 use amqprs::channel::*;
 use amqprs::consumer::AsyncConsumer;
@@ -89,34 +88,32 @@ where
 // Subscriber
 // ================================================================================================
 
-pub struct Subscriber<'a, M, S, R>
+pub struct Subscriber<'a, M, R, C>
 where
     M: Send + Sync + DeserializeOwned + 'static,
-    S: Send + Sync + Consumer<M, R> + 'static,
     R: Send + Sync + Clone + Debug + 'static,
+    C: Send + Sync + Consumer<M, R> + 'static,
 {
     channel: &'a Channel,
     consume_args: Option<BasicConsumeArguments>,
-    consumer: ConsumerWrapper<M, S, R>,
+    consumer: ConsumerWrapper<M, R, C>,
     consumer_tag: Option<String>,
     queue: Option<String>,
-    _consumer_result_type: PhantomData<R>,
 }
 
-impl<'a, M, S, R> Subscriber<'a, M, S, R>
+impl<'a, M, R, C> Subscriber<'a, M, R, C>
 where
     M: Send + Sync + DeserializeOwned + Clone + 'static,
-    S: Send + Sync + Consumer<M, R> + 'static,
     R: Send + Sync + Clone + Debug + 'static,
+    C: Send + Sync + Consumer<M, R> + 'static,
 {
-    pub fn new(channel: &'a Channel, consumer: S) -> Self {
+    pub fn new(channel: &'a Channel, consumer: C) -> Self {
         Self {
             channel,
             consume_args: Some(BasicConsumeArguments::default()),
             consumer: ConsumerWrapper::new(consumer),
             consumer_tag: None,
             queue: None,
-            _consumer_result_type: PhantomData,
         }
     }
 

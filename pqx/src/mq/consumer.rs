@@ -77,6 +77,9 @@ impl<R: Send + Debug> ConsumerResult<R> {
 
 // ================================================================================================
 // Consumer
+//
+// M: message that can be converted from a `Vec<u8>`;
+// R: result that returned by the consume method
 // ================================================================================================
 
 #[async_trait]
@@ -142,25 +145,25 @@ where
 // ================================================================================================
 
 #[derive(Clone)]
-pub(crate) struct ConsumerWrapper<M, T, R>
+pub(crate) struct ConsumerWrapper<M, R, C>
 where
     M: Send + DeserializeOwned,
-    T: Send + Consumer<M, R>,
     R: Send + Clone + Debug + 'static,
+    C: Send + Consumer<M, R>,
 {
-    consumer: T,
+    consumer: C,
     consume_signal_sender: Sender<bool>,
     consume_signal_receiver: Arc<Mutex<Receiver<bool>>>,
     _msg_type: PhantomData<(M, R)>,
 }
 
-impl<M, T, R> ConsumerWrapper<M, T, R>
+impl<M, R, C> ConsumerWrapper<M, R, C>
 where
     M: Send + DeserializeOwned,
-    T: Send + Consumer<M, R>,
     R: Send + Clone + Debug + 'static,
+    C: Send + Consumer<M, R>,
 {
-    pub fn new(consumer: T) -> Self {
+    pub fn new(consumer: C) -> Self {
         let (tx, rx) = tokio::sync::mpsc::channel(1);
 
         Self {
@@ -171,7 +174,7 @@ where
         }
     }
 
-    pub fn consumer(&mut self) -> &mut T {
+    pub fn consumer(&mut self) -> &mut C {
         &mut self.consumer
     }
 
@@ -274,11 +277,11 @@ where
 }
 
 #[async_trait]
-impl<M, T, R> AsyncConsumer for ConsumerWrapper<M, T, R>
+impl<M, R, C> AsyncConsumer for ConsumerWrapper<M, R, C>
 where
     M: Send + Sync + DeserializeOwned,
-    T: Send + Sync + Consumer<M, R>,
     R: Send + Sync + Clone + Debug,
+    C: Send + Sync + Consumer<M, R>,
 {
     async fn consume(
         &mut self,

@@ -87,7 +87,7 @@ async fn main() {
     let mp = MessagePersistent::new(ps.db.unwrap());
 
     // setup consumer
-    let mut consumer = Executor::new(init_config.header_exchange, mp);
+    let mut consumer = Executor::new(init_config.delayed_exchange, mp);
     consumer
         .exec_mut()
         .register_stdout_fn(Arc::new(logging_info))

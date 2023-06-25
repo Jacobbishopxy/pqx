@@ -73,11 +73,11 @@ impl Consumer<Command, ExitStatus> for Executor {
     }
 
     #[instrument]
-    async fn success_callback(&mut self, content: &Command, result: ExitStatus) -> PqxResult<()> {
+    async fn success_callback(&mut self, message: &Command, result: ExitStatus) -> PqxResult<()> {
         let er = ExecutionResult::new(result.code().unwrap_or(0));
 
         // persist message into db
-        let id = self.persist.insert_history(content).await?;
+        let id = self.persist.insert_history(message).await?;
         debug!("{} success insert_history id: {}", now!(), id);
         let id = self.persist.insert_result(id, &er).await?;
         debug!("{} success insert_result id: {}", now!(), id);
@@ -88,11 +88,11 @@ impl Consumer<Command, ExitStatus> for Executor {
     #[instrument]
     async fn retry_callback(
         &mut self,
-        content: &Command,
+        message: &Command,
         result: Option<ExitStatus>,
     ) -> PqxResult<()> {
         // persist message into db
-        let id = self.persist.insert_history(content).await?;
+        let id = self.persist.insert_history(message).await?;
         debug!("{} retry insert_history id: {}", now!(), id);
 
         let er = match result {

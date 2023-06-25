@@ -9,7 +9,7 @@ use pqx::mq::{MqClient, Publisher};
 use pqx::pqx_util::*;
 use pqx_app::adt::Command;
 use pqx_app::cfg::{ConnectionsConfig, InitiationsConfig};
-use tracing::info;
+use tracing::{debug, info};
 
 // ================================================================================================
 // Const
@@ -75,6 +75,8 @@ async fn main() {
     let task_path = task_path.to_string_lossy();
     let task: Command = read_json(task_path).unwrap();
 
+    debug!("{} task: {:?}", now!(), &task);
+
     // publisher
     let publisher = Publisher::new(chan);
 
@@ -83,7 +85,7 @@ async fn main() {
             let props_list = Vec::<BasicProperties>::try_from(&task).unwrap();
             for props in props_list.into_iter() {
                 publisher
-                    .publish_with_props(&init_config.header_exchange, "", task.cmd().clone(), props)
+                    .publish_with_props(&init_config.header_exchange, "", task.clone(), props)
                     .await
                     .unwrap();
             }

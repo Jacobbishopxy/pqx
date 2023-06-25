@@ -414,3 +414,26 @@ impl<'a> TryFrom<&'a Value> for BindingInfo {
         })
     }
 }
+
+// ================================================================================================
+// Test
+// ================================================================================================
+
+#[cfg(test)]
+mod test_adt {
+    use pqx::pqx_util::*;
+
+    use super::*;
+
+    const TASK: &str = "task.json";
+
+    #[test]
+    fn command_se_de_success() {
+        // read task.json
+        let task_path = get_cur_dir_file(TASK).unwrap();
+        let task_path = task_path.to_string_lossy();
+        let task = read_json::<_, Command>(task_path);
+
+        println!("{:?}", task);
+    }
+}

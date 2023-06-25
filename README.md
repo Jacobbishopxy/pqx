@@ -224,4 +224,10 @@ pub enum CmdArg {
 
 ## Todo
 
+- new bin `inspector`, and take `INSP` from `initiator`
+
+- list all consumers (simply by `MqQuery`)
+
+- flexible `publisher` (not only read task from Json file)
+
 - Module `dynamic`: dynamically set/del exchange/queue/binding.
