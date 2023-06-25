@@ -16,4 +16,5 @@ pqx/conn.yml
 pqx/log
 pqx-app/conn.yml
 pqx-app/init.yml
+pqx-app/task.json
 pqx-util/conn.yml

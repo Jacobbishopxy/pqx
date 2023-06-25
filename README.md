@@ -20,7 +20,7 @@ A full command in Json expression looks like this 🧐:
 {
     "mailing_to": [
         {
-            "unique_key": "h1",
+            "unique_key": "h1"
         },
         {
             "unique_key": "h2",

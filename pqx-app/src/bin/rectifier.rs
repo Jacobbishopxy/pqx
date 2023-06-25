@@ -80,7 +80,7 @@ async fn main() {
     let args = Args::parse();
 
     // logger
-    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
+    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX, tracing::Level::INFO).unwrap();
 
     info!("{} Start rectifier... 🫨", now!());
 

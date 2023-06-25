@@ -184,7 +184,7 @@ async fn create_table(client: &PersistClient) {
 async fn main() {
     let args = Args::parse();
 
-    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
+    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX, tracing::Level::INFO).unwrap();
 
     info!("{} Start initiator... 🫨", now!());
 

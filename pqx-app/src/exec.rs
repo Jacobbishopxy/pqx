@@ -48,7 +48,10 @@ impl Executor {
 impl Consumer<Command, ExitStatus> for Executor {
     #[instrument]
     async fn consume(&mut self, message: &Command) -> PqxResult<ConsumerResult<ExitStatus>> {
+        debug!("{} start executing...", now!());
         let es = self.exec.exec(1, message.cmd()).await?;
+        debug!("{} end execution", now!());
+
         let res = if es.success() {
             ConsumerResult::success(es)
         } else {

@@ -13,9 +13,11 @@ clean-log:
 init-config:
 	cp -n docker/server/config/conn.template.yml docker/server/config/conn.yml | true && \
 	cp -n docker/server/config/init.template.yml docker/server/config/init.yml | true && \
+	cp -n docker/server/config/task.template.json docker/server/config/task.json | true && \
 	cp -n pqx/conn.template.yml pqx/conn.yml | true && \
 	cp -n pqx-app/conn.template.yml pqx-app/conn.yml | true && \
 	cp -n pqx-app/init.template.yml pqx-app/init.yml | true && \
+	cp -n pqx-app/task.template.json pqx-app/task.json | true && \
 	cp -n pqx-util/conn.template.yml pqx-util/conn.yml | true && \
 	echo "done"
 

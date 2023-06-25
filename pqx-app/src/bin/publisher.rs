@@ -15,6 +15,9 @@ use tracing::info;
 // Const
 // ================================================================================================
 
+// commands
+const PUB: &str = "pub";
+
 // default constants
 const LOGGING_DIR: &str = "./logs";
 const FILENAME_PREFIX: &str = "pqx_publisher";
@@ -42,11 +45,12 @@ struct Args {
 // Main
 // ================================================================================================
 
+/// 0. cargo run --bin publisher -- -o pub
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
 
-    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
+    let _guard = logging_init(LOGGING_DIR, FILENAME_PREFIX, tracing::Level::INFO).unwrap();
 
     info!("{} Start publisher... 🫨", now!());
 
@@ -73,12 +77,18 @@ async fn main() {
 
     // publisher
     let publisher = Publisher::new(chan);
-    let props_list = Vec::<BasicProperties>::try_from(&task).unwrap();
-    for props in props_list.into_iter() {
-        publisher
-            .publish_with_props(&init_config.header_exchange, "", task.cmd().clone(), props)
-            .await
-            .unwrap();
+
+    match args.option.as_str() {
+        PUB => {
+            let props_list = Vec::<BasicProperties>::try_from(&task).unwrap();
+            for props in props_list.into_iter() {
+                publisher
+                    .publish_with_props(&init_config.header_exchange, "", task.cmd().clone(), props)
+                    .await
+                    .unwrap();
+            }
+        }
+        _ => panic!("undefined option"),
     }
 
     publisher.block(1).await;

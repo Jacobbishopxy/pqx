@@ -1,0 +1,18 @@
+{
+    "mailing_to": [
+        {
+            "unique_key": "h1"
+        }
+    ],
+    "retry": 5,
+    "poke": 60,
+    "waiting_timeout": 180,
+    "consuming_timeout": 270,
+    "cmd": {
+        "CondaPython": {
+            "env": "py310",
+            "dir": "$HOME/Code/pqx/scripts",
+            "script": "print_csv_in_line.py"
+        }
+    }
+}

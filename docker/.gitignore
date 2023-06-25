@@ -8,3 +8,4 @@
 /server/config/*
 !/server/config/conn.template.yml
 !/server/config/init.template.yml
+!/server/config/task.template.json

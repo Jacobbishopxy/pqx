@@ -18,7 +18,7 @@ use tracing::{error, info, instrument};
 // Const
 // ================================================================================================
 
-const LOGGING_DIR: &str = ".";
+const LOGGING_DIR: &str = "./logs";
 const FILENAME_PREFIX: &str = "pqx_subscriber";
 const CONN_CONFIG: &str = "conn.yml";
 const INIT_CONFIG: &str = "init.yml";
@@ -57,11 +57,13 @@ struct Args {
 // Main
 // ================================================================================================
 
+/// cargo run --bin subscriber -- -q h1
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
     let args = Args::parse();
 
-    let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
+    // let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX, tracing::Level::INFO).unwrap();
+    let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX, tracing::Level::DEBUG).unwrap();
 
     info!("{} Start subscriber... 🫨", now!());
 
