@@ -233,7 +233,7 @@ async fn declare_exchanges_and_queue_success() {
 
 #[tokio::test]
 async fn mq_subscriber_success() {
-    let file_appender = tracing_appender::rolling::daily("./log", "mq_subscriber.log");
+    let file_appender = tracing_appender::rolling::daily("./logs", "mq_subscriber.log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     tracing_subscriber::fmt().with_writer(non_blocking).init();
 

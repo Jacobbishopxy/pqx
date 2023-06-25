@@ -206,6 +206,4 @@ pub enum CmdArg {
 
 ## Todo
 
-- By using header-exchange, we are able to play with more complicated message delivery. Hence a flexible `Command` is required.
-
 - Module `dynamic`: dynamically set/del exchange/queue/binding.

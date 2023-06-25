@@ -6,6 +6,19 @@ include Makefile.env
 tree:
 	tree --dirsfirst --noreport -I "target|tests|scripts|cache|log|logs|*.md|*.env|*.json|*.lock|*.toml|*.yml|*.csv|*.svg|*.drawio|docker|Makefile" | sed 's/^//' > Catalog.md
 
+clean-log:
+	rm -rf docker/server/config/logs && rm -rf pqx/logs && rm -rf pqx-app/logs
+
+# no override
+init-config:
+	cp -n docker/server/config/conn.template.yml docker/server/config/conn.yml | true && \
+	cp -n docker/server/config/init.template.yml docker/server/config/init.yml | true && \
+	cp -n pqx/conn.template.yml pqx/conn.yml | true && \
+	cp -n pqx-app/conn.template.yml pqx-app/conn.yml | true && \
+	cp -n pqx-app/init.template.yml pqx-app/init.yml | true && \
+	cp -n pqx-util/conn.template.yml pqx-util/conn.yml | true && \
+	echo "done"
+
 # ================================================================================================
 # facilities
 # ================================================================================================
@@ -72,3 +85,6 @@ pqx-build:
 
 pqx-setup:
 	cd docker/server && ./setup.sh
+
+pqx-into:
+	docker exec -it ${CONTAINER_PQX} bash
