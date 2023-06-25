@@ -5,6 +5,9 @@
 header_exchange: "pqx.dev.header"
 delayed_exchange: "pqx.dev.delayed"
 dead_letter_exchange: "pqx.dev.dlx"
+dead_letter_queue: "pqx.dev.dl-que"
+# 12 hr
+dead_message_ttl: 43200000
 header_queues:
   - header_queue:
     queue: "h1"

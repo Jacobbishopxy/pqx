@@ -99,6 +99,10 @@ impl AsyncConsumer for DevDlxConsumer {
 
 #[tokio::test]
 async fn declare_dlx_success() {
+    /*
+    cargo test --package pqx --test test_dlx -- declare_dlx_success --exact --nocapture
+     */
+
     // 0. client connection and open channel
     let mut client = MqClient::new();
     let pth = get_cur_dir_file("conn.yml").unwrap();
@@ -119,7 +123,9 @@ async fn declare_dlx_success() {
 
 #[tokio::test]
 async fn mq_subscribe_success() {
-    // cargo test --package pqx --test test_dlx -- mq_subscribe_success --exact --nocapture
+    /*
+    cargo test --package pqx --test test_dlx -- mq_subscribe_success --exact --nocapture
+     */
 
     // 0. client connection and open channel
     let mut client = MqClient::new();
@@ -163,6 +169,10 @@ async fn mq_subscribe_success() {
 
 #[tokio::test]
 async fn publish_msg_to_dlx_success() {
+    /*
+    cargo test --package pqx --test test_dlx -- publish_msg_to_dlx_success --exact --nocapture
+     */
+
     // 0. client connection and open channel
     let mut client = MqClient::new();
     let pth = get_cur_dir_file("conn.yml").unwrap();

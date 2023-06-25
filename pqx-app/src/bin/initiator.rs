@@ -4,7 +4,7 @@
 //! brief:
 
 use clap::Parser;
-use pqx::amqprs::channel::{ExchangeType, QueueBindArguments};
+use pqx::amqprs::channel::{ExchangeType, QueueBindArguments, QueueDeclareArguments};
 use pqx::error::PqxResult;
 use pqx::mq::{FieldTableBuilder, MqClient};
 use pqx::pqx_custom_err;
@@ -99,16 +99,23 @@ async fn declare_exchange_and_queues_then_bind(
     // declare queues and bind to exchange
     for hq in &config.header_queues {
         // declare queue
-        client.declare_queue(&hq.queue).await?;
+        let mut args = QueueDeclareArguments::new(&hq.queue);
+        let mut headers = FieldTableBuilder::new();
+        // set dead letter exchange
+        headers.x_dead_letter_exchange(&config.dead_letter_exchange, "");
+        args.arguments(headers.finish());
+        client.declare_queue_by_args(args).await?;
+
         // bind queue to exchange
         let mut args = QueueBindArguments::new(&hq.queue, &config.header_exchange, "");
         let mut headers = FieldTableBuilder::new();
+        // set "x-match"
         headers.x_match(&hq.match_type);
+        // set matching pattern
         for (k, v) in hq.kv.iter() {
             headers.x_common_pair(k, v);
         }
         args.arguments(headers.finish());
-
         client.bind_queue_by_args(args).await?;
     }
 
@@ -149,12 +156,18 @@ async fn declare_dead_letter_exchange_and_bind_queues(
         .declare_exchange(&config.dead_letter_exchange, &ExchangeType::Direct)
         .await?;
 
-    // bind existing queues to dead letter exchange (suppose queue has already been declared in the former step)
-    for hq in &config.header_queues {
-        client
-            .bind_queue(&config.dead_letter_exchange, "", &hq.queue)
-            .await?;
+    // declare dead letter queue and bind to dead letter exchange
+    let mut args = QueueDeclareArguments::new(&config.dead_letter_queue);
+    let mut headers = FieldTableBuilder::new();
+    // set "x-message-ttl"
+    if let Some(ttl) = &config.dead_message_ttl {
+        headers.x_consume_ttl(*ttl);
     }
+    args.arguments(headers.finish());
+    client.declare_queue_by_args(args).await?;
+    client
+        .bind_queue(&config.dead_letter_exchange, "", &config.dead_letter_queue)
+        .await?;
 
     Ok(())
 }

@@ -42,6 +42,7 @@ struct Args {
 // ================================================================================================
 
 async fn delete_queues(client: &MqClient, config: &InitiationsConfig) -> PqxResult<()> {
+    client.delete_queue(&config.dead_letter_queue).await?;
     for hq in config.header_queues.iter() {
         client.delete_queue(&hq.queue).await?;
     }

@@ -37,6 +37,8 @@ pub struct InitiationsConfig {
     pub header_queues: Vec<HeaderQueue>,
     pub delayed_exchange: String,
     pub dead_letter_exchange: String,
+    pub dead_letter_queue: String,
+    pub dead_message_ttl: Option<i64>, // milliseconds
 }
 
 // ================================================================================================

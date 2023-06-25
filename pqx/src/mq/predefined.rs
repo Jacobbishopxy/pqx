@@ -110,6 +110,7 @@ impl FieldTableBuilder {
         self
     }
 
+    // delay: milliseconds
     pub fn x_delay(&mut self, delay: i32) -> &mut Self {
         self.0.insert(X_DELAY.clone(), FieldValue::I(delay));
 
@@ -129,12 +130,14 @@ impl FieldTableBuilder {
         self
     }
 
+    // ttl: milliseconds
     pub fn x_message_ttl(&mut self, ttl: i64) -> &mut Self {
         self.0.insert(X_MESSAGE_TTL.clone(), FieldValue::l(ttl));
 
         self
     }
 
+    // ttl: milliseconds
     pub fn x_consume_ttl(&mut self, ttl: i64) -> &mut Self {
         self.0.insert(X_CONSUME_TTL.clone(), FieldValue::l(ttl));
 
@@ -274,6 +277,9 @@ impl Retry {
         }
     }
 
+    /// Retry mechanism:
+    /// If retries > 0, then retires -= 1, and publish to delayed-exchange for the next reprocess;
+    /// if retries == 0, then `nack` (if DLX is set, then goes to there).
     pub async fn retry(
         &self,
         channel: &Channel,
@@ -313,7 +319,7 @@ impl Retry {
                 )
                 .await?;
 
-            // consume message in current queue
+            // [IMPORTANT] consume message in current queue, otherwise multiple message would be stacked
             channel
                 .basic_ack(BasicAckArguments::new(deliver.delivery_tag(), false))
                 .await?;
