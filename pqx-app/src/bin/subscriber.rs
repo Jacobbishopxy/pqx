@@ -63,6 +63,8 @@ async fn main() {
 
     let _guard = logging_file_init(LOGGING_DIR, FILENAME_PREFIX).unwrap();
 
+    info!("{} Start subscriber... 🫨", now!());
+
     // read connection config
     let config_path = get_cur_dir_file(CONN_CONFIG).unwrap();
     let conn_config: ConnectionsConfig = read_yaml(config_path.to_str().unwrap()).unwrap();
@@ -99,4 +101,6 @@ async fn main() {
 
     // block until fail
     subscriber.soft_fail_block().await;
+
+    info!("{} End subscriber 😎", now!());
 }

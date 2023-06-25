@@ -170,7 +170,7 @@ async fn create_table(client: &PersistClient) {
 // Main
 // ================================================================================================
 
-/// Main
+/// Options
 ///
 /// 0. cargo run --bin initiator -- -o insp
 /// 1. cargo run --bin initiator -- -o decl_x
@@ -268,5 +268,5 @@ async fn main() {
         _ => panic!("undefined option"),
     }
 
-    info!("{} Start initiator... 😎", now!());
+    info!("{} End initiator 😎", now!());
 }

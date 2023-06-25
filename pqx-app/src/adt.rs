@@ -6,10 +6,10 @@
 use std::collections::HashMap;
 
 use chrono::Local;
-use pqx::amqprs::{FieldTable, FieldValue};
+use pqx::amqprs::BasicProperties;
 use pqx::ec::CmdArg;
 use pqx::error::PqxError;
-use pqx::mq::{X_CONSUME_TTL, X_DELAY, X_MESSAGE_TTL, X_RETRIES};
+use pqx::mq::FieldTableBuilder;
 use pqx::pqx_custom_err;
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
@@ -22,21 +22,8 @@ use crate::entities::{message_history, message_result};
 // ================================================================================================
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum MailingTo {
-    Any(HashMap<String, String>),
-    All(HashMap<String, String>),
-}
-
-impl Default for MailingTo {
-    fn default() -> Self {
-        Self::Any(HashMap::new())
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Command {
-    pub mailing_to: MailingTo,
+    pub mailing_to: Vec<HashMap<String, String>>,
     pub retry: Option<u8>,
     pub poke: Option<u16>,
     pub waiting_timeout: Option<u32>,
@@ -47,7 +34,7 @@ pub struct Command {
 impl Command {
     pub fn new(cmd: CmdArg) -> Self {
         Self {
-            mailing_to: MailingTo::default(),
+            mailing_to: Vec::new(),
             retry: None,
             poke: None,
             waiting_timeout: None,
@@ -61,37 +48,7 @@ impl Command {
     }
 }
 
-impl<'a> TryFrom<&'a Command> for FieldTable {
-    type Error = PqxError;
-
-    fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
-        let mut ft = FieldTable::new();
-
-        if let Some(r) = cmd.retry {
-            ft.insert(X_RETRIES.clone(), FieldValue::s(r.into()));
-        }
-
-        if let Some(p) = cmd.poke {
-            // convert to milliseconds
-            let p = i32::from(p) * 1000;
-            ft.insert(X_DELAY.clone(), FieldValue::I(p));
-        }
-
-        if let Some(t) = cmd.waiting_timeout {
-            // convert to milliseconds
-            let t = i64::from(t) * 1000;
-            ft.insert(X_MESSAGE_TTL.clone(), FieldValue::l(t));
-        }
-
-        if let Some(t) = cmd.consuming_timeout {
-            // convert to milliseconds
-            let t = i64::from(t) * 1000;
-            ft.insert(X_CONSUME_TTL.clone(), FieldValue::l(t));
-        }
-
-        Ok(ft)
-    }
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Command -> ActiveModel
 impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
@@ -113,6 +70,7 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
     }
 }
 
+// Model -> Command
 impl TryFrom<message_history::Model> for Command {
     type Error = PqxError;
 
@@ -125,6 +83,57 @@ impl TryFrom<message_history::Model> for Command {
             consuming_timeout: m.consuming_timeout.map(u32::try_from).transpose()?,
             cmd: serde_json::from_value(m.cmd)?,
         };
+
+        Ok(res)
+    }
+}
+
+// Command -> Vec<BasicProperties>
+impl<'a> TryFrom<&'a Command> for Vec<BasicProperties> {
+    type Error = PqxError;
+
+    fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
+        let headers = {
+            let mut ftb = FieldTableBuilder::new();
+
+            if let Some(r) = cmd.retry {
+                ftb.x_retries(r.into());
+            }
+
+            if let Some(p) = cmd.poke {
+                // convert to milliseconds
+                let p = i32::from(p) * 1000;
+                ftb.x_delay(p);
+            }
+
+            if let Some(t) = cmd.waiting_timeout {
+                // convert to milliseconds
+                let t = i64::from(t) * 1000;
+                ftb.x_message_ttl(t);
+            }
+
+            if let Some(t) = cmd.consuming_timeout {
+                // convert to milliseconds
+                let t = i64::from(t) * 1000;
+                ftb.x_consume_ttl(t);
+            }
+
+            ftb.finish()
+        };
+
+        let mut res = vec![];
+
+        for mt in cmd.mailing_to.iter() {
+            let mut ftb = FieldTableBuilder::from(headers.clone());
+
+            for (k, v) in mt.iter() {
+                ftb.x_common_pair(k, v);
+            }
+
+            let mut props = BasicProperties::default();
+            props.with_headers(ftb.finish());
+            res.push(props);
+        }
 
         Ok(res)
     }

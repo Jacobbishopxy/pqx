@@ -1,14 +1,34 @@
 # PQX
 
-PQX stands for Priority Queue Execution. Inspired by [the official tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-python.html), PQX-APP uses RabbitMQ as the message system, and serves as a RPC client which pulls messages from MQ and deserialize messages then executes commands.
+PQX stands for Priority Queue Execution. Inspired by [the official tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-python.html), PQX-APP uses RabbitMQ as the message system, and serves as a RPC client which pulls messages from MQ, deserializes messages and executes commands. PQX-APP can also be placed in different machines in order to execute machine-specified commands (by `MailingTo` field, see below).
 
 Retry functionality is based on RabbitMQ plugin `delayed_message_exchange`, check [this](https://github.com/rabbitmq/rabbitmq-delayed-message-exchange) for more detail.
 
-A full command in Json expression looks like this:
+Bin files provided, currently:
+
+- [initiator](./pqx-app/src/bin/initiator.rs): initializing data, such as database tables, MQ settings and etc.
+
+- [rectifier](./pqx-app/src/bin/rectifier.rs): modifying initialized data (delete/recreate/...)
+
+- [subscriber](./pqx-app/src/bin/subscriber.rs): consuming message from the MQ, and execute commands
+
+- [publisher](./pqx-app/src/bin/publisher.rs): sending message to the MQ
+
+A full command in Json expression looks like this 🧐:
 
 ```json
 {
-    "consumer_ids": ["h1", "h3"],
+    "mailing_to": {
+        [
+            {
+                "unique_key": "h1",
+            },
+            {
+                "unique_key": "h2",
+                "common_key": "dev"
+            }
+        ]
+    },
     "retry": 5,
     "poke": 60,
     "waiting_timeout": 180,
@@ -25,24 +45,24 @@ A full command in Json expression looks like this:
 
 where:
 
-- `consumer_ids` means which consumer to receive this message;
+- `mailing_to` a list of matching criteria (logic 'or', meaning this message will be sent multiple times), mailing to the queues' who match one of these criteria. if `mailing_to` is empty, then send to all queues (header-exchange mechanism);
 
 - `retry` the number of retries, default `0`;
 
-- `poke` retry frequency in seconds;
+- `poke` retry frequency in *seconds*;
 
-- `waiting_timeout` the message lives in the queue (in seconds), default infinity;
+- `waiting_timeout` the message lives in the queue (*seconds*), default infinity;
 
-- `consuming_timeout` the `acking` timeout in a consumer (in seconds);
+- `consuming_timeout` the `acking` timeout in a consumer (*seconds*);
 
-- `cmd` the command wants to be executed, for more detail see `CmdArg` in [adt.rs](./pqx/src/ec/cmd.rs).
+- `cmd` the command needs to be executed, for more detail see `CmdArg` in [adt.rs](./pqx/src/ec/cmd.rs).
 
 <details>
 <summary>and the full definition in Rust:</summary>
 
 ```rs
 pub struct Command {
-    pub consumer_ids: Vec<String>,
+    pub mailing_to: Vec<HashMap<String, String>>,
     pub retry: Option<u8>,
     pub poke: Option<u16>,
     pub waiting_timeout: Option<u32>,
@@ -172,7 +192,7 @@ pub enum CmdArg {
 
 1. Build image for Pqx: `make pqx-build`
 
-1. Follow the template files under `./docker/server/config`, create config files: `conn.yml` & `init.yml`.
+1. Create config files: `make init-config`, modify these configs `conn.yml` & `init.yml`.
 
 1. Build and run a Pqx container: `make pqx-build` then `make pqx-setup`
 
