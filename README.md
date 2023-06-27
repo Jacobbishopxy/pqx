@@ -29,10 +29,12 @@ A full command in Json expression looks like this 🧐:
             "common_key": "dev"
         }
     ],
-    "retry": 5,
-    "poke": 60,
-    "waiting_timeout": 180,
-    "consuming_timeout": 270,
+    "config": {
+        "retry": 5,
+        "poke": 60,
+        "waiting_timeout": 180,
+        "consuming_timeout": 270
+    },
     "cmd": {
         "CondaPython": {
             "env": "py310",
@@ -63,11 +65,15 @@ where:
 ```rs
 pub struct Command {
     pub mailing_to: Vec<HashMap<String, String>>,
+    pub config: Config,
+    pub cmd: CmdArg,
+}
+
+pub struct Config {
     pub retry: Option<u8>,
     pub poke: Option<u16>,
     pub waiting_timeout: Option<u32>,
     pub consuming_timeout: Option<u32>,
-    pub cmd: CmdArg,
 }
 
 pub enum CmdArg {
@@ -225,6 +231,12 @@ pub enum CmdArg {
 - [message persistence](./pqx-app/tests/test_persistence.rs): database interaction
 
 - [mq api](./pqx-util/tests/test_mq.rs): RabbitMQ management APIs
+
+## Known issue
+
+- If `retry` happened, message would send back to the original exchange, and at the moment as a header-typed exchange, delayed-exchange would deliver this `retry` message to all the matched queues, which means if one consumer failed to process this message, all the other consumers would receive this message again. Hence, a strict publish header should be introduced into the message's header so that delayed-exchange could deliver the `retry` message to the right place.
+
+- Delayed exchange cannot be removed unless used 'disable plugin' technique, see [Makefile](./Makefile) `mq-disable-delayed-exchange`, and `mq-enable-delayed-exchange`.
 
 ## Todo
 

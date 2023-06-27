@@ -59,6 +59,12 @@ mq-deleteque:
 mq-listque:
 	docker exec ${CONTAINER_MQ} rabbitmqctl list_queues --vhost=${VHOST}
 
+mq-disable-delayed-exchange:
+	docker exec ${CONTAINER_MQ} rabbitmq-plugins disable rabbitmq_delayed_message_exchange
+
+mq-enable-delayed-exchange:
+	docker exec ${CONTAINER_MQ} rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+
 mq-into:
 	docker exec -it ${CONTAINER_MQ} bash
 

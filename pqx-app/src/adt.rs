@@ -21,13 +21,18 @@ use crate::entities::{message_history, message_result};
 // MailingTo & Command
 // ================================================================================================
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Command {
-    pub mailing_to: Vec<HashMap<String, String>>,
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct Config {
     pub retry: Option<u8>,
     pub poke: Option<u16>,
     pub waiting_timeout: Option<u32>,
     pub consuming_timeout: Option<u32>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Command {
+    pub mailing_to: Vec<HashMap<String, String>>,
+    pub config: Config,
     pub cmd: CmdArg,
 }
 
@@ -35,12 +40,17 @@ impl Command {
     pub fn new(cmd: CmdArg) -> Self {
         Self {
             mailing_to: Vec::new(),
-            retry: None,
-            poke: None,
-            waiting_timeout: None,
-            consuming_timeout: None,
+            config: Config::default(),
             cmd,
         }
+    }
+
+    pub fn mailing_to(&self) -> &[HashMap<String, String>] {
+        &self.mailing_to
+    }
+
+    pub fn config(&self) -> &Config {
+        &self.config
     }
 
     pub fn cmd(&self) -> &CmdArg {
@@ -57,10 +67,10 @@ impl<'a> TryFrom<&'a Command> for message_history::ActiveModel {
     fn try_from(cmd: &'a Command) -> Result<Self, Self::Error> {
         let am = message_history::ActiveModel {
             mailing_to: Set(serde_json::json!(cmd.mailing_to)),
-            retry: Set(cmd.retry.map(i16::from)),
-            poke: Set(cmd.poke.map(i32::from)),
-            waiting_timeout: Set(cmd.waiting_timeout.map(i64::from)),
-            consuming_timeout: Set(cmd.consuming_timeout.map(i64::from)),
+            retry: Set(cmd.config.retry.map(i16::from)),
+            poke: Set(cmd.config.poke.map(i32::from)),
+            waiting_timeout: Set(cmd.config.waiting_timeout.map(i64::from)),
+            consuming_timeout: Set(cmd.config.consuming_timeout.map(i64::from)),
             cmd: Set(serde_json::json!(cmd.cmd)),
             time: Set(Local::now()),
             ..Default::default()
@@ -77,10 +87,12 @@ impl TryFrom<message_history::Model> for Command {
     fn try_from(m: message_history::Model) -> Result<Self, Self::Error> {
         let res = Self {
             mailing_to: serde_json::from_value(m.mailing_to)?,
-            retry: m.retry.map(u8::try_from).transpose()?,
-            poke: m.poke.map(u16::try_from).transpose()?,
-            waiting_timeout: m.waiting_timeout.map(u32::try_from).transpose()?,
-            consuming_timeout: m.consuming_timeout.map(u32::try_from).transpose()?,
+            config: Config {
+                retry: m.retry.map(u8::try_from).transpose()?,
+                poke: m.poke.map(u16::try_from).transpose()?,
+                waiting_timeout: m.waiting_timeout.map(u32::try_from).transpose()?,
+                consuming_timeout: m.consuming_timeout.map(u32::try_from).transpose()?,
+            },
             cmd: serde_json::from_value(m.cmd)?,
         };
 
@@ -96,23 +108,23 @@ impl<'a> TryFrom<&'a Command> for Vec<BasicProperties> {
         let headers = {
             let mut ftb = FieldTableBuilder::new();
 
-            if let Some(r) = cmd.retry {
+            if let Some(r) = cmd.config.retry {
                 ftb.x_retries(r.into());
             }
 
-            if let Some(p) = cmd.poke {
+            if let Some(p) = cmd.config.poke {
                 // convert to milliseconds
                 let p = i32::from(p) * 1000;
                 ftb.x_delay(p);
             }
 
-            if let Some(t) = cmd.waiting_timeout {
+            if let Some(t) = cmd.config.waiting_timeout {
                 // convert to milliseconds
                 let t = i64::from(t) * 1000;
                 ftb.x_message_ttl(t);
             }
 
-            if let Some(t) = cmd.consuming_timeout {
+            if let Some(t) = cmd.config.consuming_timeout {
                 // convert to milliseconds
                 let t = i64::from(t) * 1000;
                 ftb.x_consume_ttl(t);
