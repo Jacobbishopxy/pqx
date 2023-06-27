@@ -18,7 +18,7 @@ use crate::error::{PqxError, PqxResult};
 // const
 // ================================================================================================
 
-pub static X_DELAYED_MESSAGE: Lazy<ExchangeType> =
+pub static EXCHANGE_TYPE_DELAYED: Lazy<ExchangeType> =
     Lazy::new(|| ExchangeType::Plugin(String::from("x-delayed-message")));
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -263,8 +263,8 @@ impl<'a> From<&'a FieldTable> for FieldTableViewer<'a> {
 pub struct Retry {
     exchange: String,
     routing_key: String,
-    poke: u16, // secondes
-    retries: u8,
+    poke: u16,   // secondes
+    retries: u8, // number of retry
 }
 
 impl Retry {

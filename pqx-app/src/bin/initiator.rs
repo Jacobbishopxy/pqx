@@ -6,7 +6,7 @@
 use clap::Parser;
 use pqx::amqprs::channel::{ExchangeType, QueueBindArguments, QueueDeclareArguments};
 use pqx::error::PqxResult;
-use pqx::mq::{FieldTableBuilder, MqClient};
+use pqx::mq::{FieldTableBuilder, MqClient, EXCHANGE_TYPE_DELAYED};
 use pqx::pqx_custom_err;
 use pqx::pqx_util::*;
 use pqx_app::adt::{BindingInfo, ExchangeInfo, QueueInfo};
@@ -127,8 +127,14 @@ async fn declare_delayed_exchange_and_bind_queues(
     config: &InitiationsConfig,
 ) -> PqxResult<()> {
     // declare delayed exchange
+    let mut args = FieldTableBuilder::new();
+    args.x_delayed_type(&ExchangeType::Headers);
     client
-        .declare_exchange(&config.delayed_exchange, &ExchangeType::Headers)
+        .declare_exchange_with_args(
+            &config.delayed_exchange,
+            &EXCHANGE_TYPE_DELAYED,
+            args.finish(),
+        )
         .await?;
 
     // bind existing queues to delayed exchange (suppose queue has already been declared in the former step)
@@ -191,7 +197,7 @@ async fn create_table(client: &PersistClient) {
 /// 3. cargo run --bin initiator -- -o decl_dlx
 /// 4. cargo run --bin initiator -- -o decl_all
 /// 5. cargo run --bin initiator -- -o crt_tbl
-/// 6. cargo run --bin initiator -- -o all
+/// 6. cargo run --bin initiator -- -o init
 ///
 #[tokio::main]
 async fn main() {
