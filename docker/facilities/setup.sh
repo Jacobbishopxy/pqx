@@ -3,7 +3,14 @@
 # @date:	2023/06/24 00:26:36 Saturday
 # @brief:
 
-# source ../.env
+# determine which .env to use
+if [[ -z "${DEPLOY_ENV}" ]]; then
+  src="../default.env"
+else
+  src="../${DEPLOY_ENV}.env"
+fi
+echo using $src for deployment
+source $src
 
 # docker network create $INTERNAL_NETWORK
 docker-compose down

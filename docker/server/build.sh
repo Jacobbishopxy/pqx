@@ -3,8 +3,14 @@
 # @date:	2023/06/21 23:08:01 Wednesday
 # @brief:
 
-
-source ../.env
+# determine which .env to use
+if [[ -z "${DEPLOY_ENV}" ]]; then
+  src="../default.env"
+else
+  src="../${DEPLOY_ENV}.env"
+fi
+echo using $src for deployment
+source $src
 
 docker build \
     -t "${PQX_IMAGE_NAME}":"${PQX_IMAGE_VERSION}" \

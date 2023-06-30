@@ -1,14 +1,14 @@
 version: '3'
 
 services:
-  mq-dev:
+  mq:
     restart: always
-    container_name: mq-dev
-    image: rabbitmq-dev:0.1
+    container_name: ${PQX_FACILITIES_MQ_CONTAINER_NAME}
+    image: ${PQX_FACILITIES_MQ_NAME}:${PQX_FACILITIES_MQ_VERSION}
     environment:
-      RABBITMQ_DEFAULT_PASS: admin
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_VHOST: vhost
+      RABBITMQ_DEFAULT_USER: ${USER}
+      RABBITMQ_DEFAULT_PASS: ${PASS}
+      RABBITMQ_DEFAULT_VHOST: ${VHOST}
 
     ports:
       - "5677:5672"
@@ -17,14 +17,14 @@ services:
       - ./mq/:/var/lib/rabbitmq/:z
       - /etc/localtime:/etc/localtime:ro
 
-  pg-dev:
+  pg:
     restart: always
-    container_name: pg-dev
-    image: postgres:14
+    container_name: ${PQX_FACILITIES_PG_CONTAINER_NAME}
+    image: ${PQX_FACILITIES_DB_NAME}:${PQX_FACILITIES_DB_VERSION}
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: admin
+      POSTGRES_USER: ${USER}
+      POSTGRES_PASSWORD: ${PASS}
+      POSTGRES_DB: ${DATABASE}
       PGDATA: /var/lib/postgresql/data/pgdata
 
     ports:
