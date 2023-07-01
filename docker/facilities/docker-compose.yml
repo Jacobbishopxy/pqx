@@ -34,7 +34,7 @@ services:
       - ./pg:/var/lib/postgresql/data:z
       - /etc/localtime:/etc/localtime:ro
 
-# networks:
-#   default:
-#     name: pqx-dev-net
-#     external: true
+networks:
+  default:
+    name: ${PQX_NET}
+    external: true

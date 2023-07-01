@@ -21,6 +21,9 @@ init-config:
 	cp -n pqx-util/conn.template.yml pqx-util/conn.yml | true && \
 	echo "done"
 
+gen-prod-env:
+	cp -n docker/default.env docker/prod.env | true
+
 # ================================================================================================
 # facilities
 # ================================================================================================

@@ -15,7 +15,7 @@ services:
 
     entrypoint: [ "sleep", "infinity" ]
 
-# networks:
-#   default:
-#     name: pqx-dev-net
-#     external: true
+networks:
+  default:
+    name: ${PQX_NET}
+    external: true

@@ -12,10 +12,15 @@ fi
 echo using $src for deployment
 source $src
 
-echo "RUST_VERSION: " ${RUST_VERSION}
 echo "PQX_CONTAINER_NAME: " ${PQX_CONTAINER_NAME}
 echo "PQX_IMAGE_NAME: " ${PQX_IMAGE_NAME}
 echo "PQX_IMAGE_VERSION: " ${PQX_IMAGE_VERSION}
+echo "PQX_NET: " ${PQX_NET}
+
+export PQX_CONTAINER_NAME=$PQX_CONTAINER_NAME
+export PQX_IMAGE_NAME=$PQX_IMAGE_NAME
+export PQX_IMAGE_VERSION=$PQX_IMAGE_VERSION
+export PQX_NET=$PQX_NET
 
 docker-compose down
 docker-compose up -d
