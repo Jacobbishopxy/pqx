@@ -37,4 +37,4 @@ services:
 networks:
   default:
     name: ${PQX_NET}
-    external: true
+    # external: true

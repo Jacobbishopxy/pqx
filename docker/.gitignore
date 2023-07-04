@@ -10,4 +10,6 @@
 !/server/config/init.template.yml
 !/server/config/task.template.json
 
+!/server/config/run.sh
+
 prod.env

@@ -204,9 +204,13 @@ pub enum CmdArg {
 
 1. Build and run a Pqx container: `make pqx-build` then `make pqx-setup`
 
-1. Check container & initialization's availability: `docker exec pqx-dev initiator -o insp`
+1. Check container & initialization's availability: `docker exec pqx-dev inspector -o insp`
 
 1. Create tables for message persistence and declare exchanges, queues and bindings: `docker exec pqx-dev initiator -o init`
+
+1. Subscribe to a specific queue: `docker exec pqx-dev ./run.sh sub start <queue-name>`
+
+1. Stop a subscriber: `docker exec pqx-dev ./run.sh sub stop`
 
 ## Test cases
 

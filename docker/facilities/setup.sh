@@ -22,7 +22,6 @@ echo "USER: " $USER
 echo "PASS: " $PASS
 echo "VHOST: " $VHOST
 echo "DATABASE: " $DATABASE
-echo "PQX_NET: " $PQX_NET
 
 export PQX_FACILITIES_MQ_CONTAINER_NAME=$PQX_FACILITIES_MQ_CONTAINER_NAME
 export PQX_FACILITIES_MQ_NAME=$PQX_FACILITIES_MQ_NAME
@@ -34,8 +33,6 @@ export USER=$USER
 export PASS=$PASS
 export VHOST=$VHOST
 export DATABASE=$DATABASE
-export PQX_NET=$PQX_NET
 
-docker network create $PQX_NET
 docker-compose down
 docker-compose up -d
