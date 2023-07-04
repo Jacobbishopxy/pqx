@@ -1,16 +1,20 @@
 # Docker
 
-- `prod.env`
+## Containers
 
-## Facilities
+- Facilities
 
-- RabbitMQ
+  - RabbitMQ
 
-- PostgreSQL
+  - PostgreSQL
 
-## Server
+- Server
 
-- Pqx
+  - Pqx
+
+## Deploy
+
+Make sure `prod.env` is under the right location (same direction as `default.env`).
 
 ## Misc
 

@@ -3,6 +3,7 @@
 # @brief:
 
 ARG     RUST_VERSION
+ARG     DEBIAN_VERSION
 
 # PLANNER
 FROM    rust:${RUST_VERSION} as planner
@@ -29,7 +30,7 @@ RUN     cargo build --release
 
 ###################################################################################################
 # APP
-FROM    rust:${RUST_VERSION}
+FROM    debian:${DEBIAN_VERSION}
 WORKDIR /app
 # RUN     apt-get update && apt-get install -y libssl-dev build-essential
 # RUN     cargo install cargo-make

@@ -15,5 +15,6 @@ source $src
 docker build \
     -t "${PQX_IMAGE_NAME}":"${PQX_IMAGE_VERSION}" \
     --build-arg RUST_VERSION="${RUST_VERSION}" \
+    --build-arg DEBIAN_VERSION="${DEBIAN_VERSION}" \
     -f ./Dockerfile ../..
 
