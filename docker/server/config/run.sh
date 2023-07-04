@@ -9,7 +9,7 @@ DATE=`date +'%Y/%m/%d %H:%M:%S'`
 
 start_sub() {
   echo "starting pqx subscriber $DATE"
-  subscriber -q $2 &
+  subscriber -q $1 &
   echo $! > subscriber.pid
   echo "done"
 }
