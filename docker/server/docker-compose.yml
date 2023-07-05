@@ -5,6 +5,7 @@ services:
     restart: always
     container_name: ${PQX_CONTAINER_NAME}
     image: ${PQX_IMAGE_NAME}:${PQX_IMAGE_VERSION}
+    init: true
 
     ports:
       - "25677:8080"

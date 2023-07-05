@@ -105,7 +105,13 @@ pqx-setup-prod:
 	cd docker/server && export DEPLOY_ENV=prod && ./setup.sh
 
 pqx-stop:
-	cd docker/server && docker-compose down
+	docker stop ${CONTAINER_PQX}
 
 pqx-into:
 	docker exec -it ${CONTAINER_PQX} bash
+
+pqx-sub-start:
+	docker exec pqx-dev ./run.sh sub start
+
+pqx-sub stop:
+	docker exec pqx-dev ./run.sh sub stop
