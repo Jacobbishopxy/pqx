@@ -113,5 +113,5 @@ pqx-into:
 pqx-sub-start:
 	docker exec pqx-dev ./run.sh sub start
 
-pqx-sub stop:
+pqx-sub-stop:
 	docker exec pqx-dev ./run.sh sub stop
