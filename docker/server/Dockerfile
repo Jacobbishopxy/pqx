@@ -32,7 +32,6 @@ RUN     cargo build --release
 # APP
 FROM    debian:${DEBIAN_VERSION}
 WORKDIR /app
-# RUN     apt-get update && apt-get install -y libssl-dev build-essential
-# RUN     cargo install cargo-make
+RUN     apt-get update && apt-get install -y procps
 COPY    --from=builder /app/target/release/ /usr/local/bin
 

@@ -25,5 +25,5 @@ docker run --name tmp --rm --entrypoint="" -it pqx-app:0.1 bash
 - add `ps` command for debian-slim
 
 ```sh
-apt-get update && apt-get install procps
+apt-get update && apt-get install -y procps
 ```

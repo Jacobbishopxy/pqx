@@ -33,12 +33,13 @@ start() {
 
 stop_sub() {
   echo "stoping pqx subscriber"
-  SUB_PID=`cat subscriber.pid`
-  if [ -n "$SUB_PID" ]
-  then
-    `echo $SUB_PID | xargs kill `
-  fi
-  `rm -rf subscriber.pid`
+  kill `pidof subscriber`
+  # SUB_PID=`cat subscriber.pid`
+  # if [ -n "$SUB_PID" ]
+  # then
+  #   `echo $SUB_PID | xargs kill `
+  # fi
+  # `rm -rf subscriber.pid`
   echo "done"
 }
 
