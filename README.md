@@ -208,7 +208,7 @@ pub enum CmdArg {
 
 1. Create tables for message persistence and declare exchanges, queues and bindings: `docker exec pqx-dev initiator -o init`
 
-1. Subscribe to a specific queue: `docker exec pqx-dev ./run.sh sub start <queue-name>`
+1. Subscribe to a specific queue: `docker exec pqx-dev ./run.sh sub start`, make sure `./docker/server/config/secret.env` has been filled
 
 1. Stop a subscriber: `docker exec pqx-dev ./run.sh sub stop`
 

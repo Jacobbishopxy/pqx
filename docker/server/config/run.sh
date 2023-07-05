@@ -3,13 +3,17 @@
 # @date:	2023/07/04 15:08:42 Tuesday
 # @brief:
 
+source ./secret.env
+
+echo "QUE: $QUE"
+
 SCRIPT_DIR=`dirname "${BASH_SOURCE-$0}"`
 SCRIPT_DIR=`cd "$SCRIPT_DIR"; pwd`
 DATE=`date +'%Y/%m/%d %H:%M:%S'`
 
 start_sub() {
   echo "starting pqx subscriber $DATE"
-  subscriber -q $1 &
+  subscriber -q $QUE &
   echo $! > subscriber.pid
   echo "done"
 }
@@ -55,7 +59,7 @@ case "$1" in
   sub|all)
     case "$2" in
       start)
-        start $1 $3
+        start $1
         ;;
       stop)
         stop $1
@@ -63,7 +67,7 @@ case "$1" in
       restart)
         stop $1
         sleep 2
-        start $1 $3
+        start $1
         ;;
       *)
         echo "Usage: $0 {sub} {start|stop|restart}"

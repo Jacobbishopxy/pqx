@@ -9,6 +9,7 @@
 !/server/config/conn.template.yml
 !/server/config/init.template.yml
 !/server/config/task.template.json
+!/server/config/secret.template.env
 
 !/server/config/run.sh
 
