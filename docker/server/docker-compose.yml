@@ -12,7 +12,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./config:/app:z # config folder
-      - ${WORK_DIR_O}:${WORK_DIR_I} # work dir
+      - ${WORK_DIR_O}:${WORK_DIR_I}:z # work dir
 
     entrypoint: [ "sleep", "infinity" ]
 

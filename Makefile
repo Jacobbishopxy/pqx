@@ -101,6 +101,9 @@ pqx-build:
 pqx-setup:
 	cd docker/server && ./setup.sh
 
+pqx-setup-prod:
+	cd docker/server && export DEPLOY_ENV=prod && ./setup.sh
+
 pqx-stop:
 	cd docker/server && docker-compose down
 
