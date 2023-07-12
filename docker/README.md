@@ -18,12 +18,8 @@ Make sure `prod.env` is under the right location (same direction as `default.env
 
 ## Misc
 
+- temporary access image for debugging
+
 ```sh
 docker run --name tmp --rm --entrypoint="" -it pqx-app:0.1 bash
-```
-
-- add `ps` command for debian-slim
-
-```sh
-apt-get update && apt-get install -y procps
 ```

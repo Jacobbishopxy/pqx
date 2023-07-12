@@ -250,4 +250,6 @@ pub enum CmdArg {
 
 - enhance `Command`, for instance accepting string replacement in `CmdArg`
 
-- Module `dynamic`: dynamically set/del exchange/queue/binding.
+- Module `dynamic`: dynamically set/del exchange/queue/binding
+
+- message aggregator, see [this](https://www.enterpriseintegrationpatterns.com/patterns/messaging/BroadcastAggregate.html)
